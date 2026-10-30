@@ -46,7 +46,7 @@ async function freshCode(): Promise<string> {
   return totp(secret("dev_totp_seed"), lastStep);
 }
 
-export const OTP_USERS = new Set(["expert1", "admin1"]);
+export const OTP_USERS = new Set(["expert1", "expert", "admin1", "admin"]);
 
 async function otpRequested(page: Page): Promise<boolean> {
   const otp = page.locator("#otp");
@@ -58,7 +58,8 @@ async function otpRequested(page: Page): Promise<boolean> {
 export async function login(page: Page, user: string, path = "/"): Promise<Page> {
   await page.goto(`/api/auth/login?return_to=${encodeURIComponent(path)}`);
   await page.fill("#username", user);
-  await page.fill("#password", secret("dev_user_password"));
+  const password = ["member", "expert", "admin"].includes(user) ? "super_tajne_haslo_123!" : secret("dev_user_password");
+  await page.fill("#password", password);
   await page.click("#kc-login");
   // With `make mfa-off` Keycloak skips the OTP step and goes straight back to the site.
   if (OTP_USERS.has(user) && (await otpRequested(page))) {

@@ -53,21 +53,32 @@ export default async function globalSetup(): Promise<void> {
   if (!token.ok()) throw new Error(`Keycloak admin login failed: ${token.status()}`);
   const headers = { Authorization: `Bearer ${(await token.json()).access_token}` };
   const users = `${AUTH}/admin/realms/spoldzielnia/users`;
-  const existing = await (await http.get(`${users}?username=expert2&exact=true`, { headers })).json();
-  if (existing.length === 0) {
-    const created = await http.post(users, {
-      headers,
-      data: {
-        username: "expert2", email: "expert2@spoldzielnia.localhost", emailVerified: true,
-        firstName: "Expert", lastName: "Two", enabled: true,
-        credentials: [{ type: "password", value: secret("dev_user_password"), temporary: false }],
-      },
-    });
-    if (!created.ok()) throw new Error(`creating expert2 failed: ${created.status()}`);
-    const [user] = await (await http.get(`${users}?username=expert2&exact=true`, { headers })).json();
-    const roles = await (await http.get(`${AUTH}/admin/realms/spoldzielnia/roles`, { headers })).json();
-    const wanted = roles.filter((r: { name: string }) => r.name === "MEMBER" || r.name === "EXPERT");
-    await http.post(`${users}/${user.id}/role-mappings/realm`, { headers, data: wanted });
+  for (const username of ["expert2", "member", "expert", "admin"]) {
+    const existing = await (await http.get(`${users}?username=${username}&exact=true`, { headers })).json();
+    if (existing.length === 0) {
+      const roleMap: Record<string, string[]> = {
+        member: ["MEMBER"],
+        expert: ["MEMBER", "EXPERT"],
+        admin: ["MEMBER", "ADMIN"],
+        expert2: ["MEMBER", "EXPERT"],
+      };
+      const rolesToAssign = roleMap[username] || ["MEMBER"];
+      const password = ["member", "expert", "admin"].includes(username) ? "super_tajne_haslo_123!" : secret("dev_user_password");
+      const created = await http.post(users, {
+        headers,
+        data: {
+          username, email: `${username}@spoldzielnia.localhost`, emailVerified: true,
+          firstName: username.charAt(0).toUpperCase() + username.slice(1),
+          lastName: username === "expert2" ? "Two" : "Default", enabled: true,
+          credentials: [{ type: "password", value: password, temporary: false }],
+        },
+      });
+      if (!created.ok()) throw new Error(`creating ${username} failed: ${created.status()}`);
+      const [user] = await (await http.get(`${users}?username=${username}&exact=true`, { headers })).json();
+      const roles = await (await http.get(`${AUTH}/admin/realms/spoldzielnia/roles`, { headers })).json();
+      const wanted = roles.filter((r: { name: string }) => rolesToAssign.includes(r.name));
+      await http.post(`${users}/${user.id}/role-mappings/realm`, { headers, data: wanted });
+    }
   }
   await http.dispose();
 }

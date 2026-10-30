@@ -277,6 +277,52 @@
           "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
         }
       ]
+    },
+    {
+      "username": "member",
+      "email": "member@spoldzielnia.localhost",
+      "emailVerified": true,
+      "firstName": "Member",
+      "lastName": "Default",
+      "enabled": true,
+      "realmRoles": ["MEMBER"],
+      "credentials": [{ "type": "password", "value": "super_tajne_haslo_123!", "temporary": false }]
+    },
+    {
+      "username": "expert",
+      "email": "expert@spoldzielnia.localhost",
+      "emailVerified": true,
+      "firstName": "Expert",
+      "lastName": "Default",
+      "enabled": true,
+      "realmRoles": ["MEMBER", "EXPERT"],
+      "credentials": [
+        { "type": "password", "value": "super_tajne_haslo_123!", "temporary": false },
+        {
+          "type": "otp",
+          "userLabel": "dev-totp",
+          "secretData": "{\"value\":\"${DEV_TOTP_SEED}\"}",
+          "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
+        }
+      ]
+    },
+    {
+      "username": "admin",
+      "email": "admin@spoldzielnia.localhost",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Default",
+      "enabled": true,
+      "realmRoles": ["MEMBER", "ADMIN"],
+      "credentials": [
+        { "type": "password", "value": "super_tajne_haslo_123!", "temporary": false },
+        {
+          "type": "otp",
+          "userLabel": "dev-totp",
+          "secretData": "{\"value\":\"${DEV_TOTP_SEED}\"}",
+          "credentialData": "{\"subType\":\"totp\",\"digits\":6,\"counter\":0,\"period\":30,\"algorithm\":\"HmacSHA1\"}"
+        }
+      ]
     }
   ]
 }
