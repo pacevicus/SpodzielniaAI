@@ -25,6 +25,7 @@ committed, add the commit hash to the story's *Delivery* list.
 | [US-08](#us-08) | User selects the UI language (Polish or English); the UI reloads in the chosen language | DONE | [14_UI_LANGUAGE.md](implementation/14_UI_LANGUAGE.md) · Etap 14 | 2026-10-26 |
 | [US-09](#us-09) | Article review dates and freshness: overdue articles warn and stay in chat; experts reconfirm them | PLANNED | [15_ARTICLE_REVIEW_DATES.md](implementation/15_ARTICLE_REVIEW_DATES.md) · Etap 15 | 2026-11-05 |
 | [US-10](#us-10) | Wiki search: full text with Polish word forms; results show no article text | PLANNED | [16_WIKI_SEARCH.md](implementation/16_WIKI_SEARCH.md) · Etap 16 | 2026-11-05 |
+| [US-11](#us-11) | Notifications in the app and by email, with no article titles or text in emails | PLANNED | [17_NOTIFICATIONS.md](implementation/17_NOTIFICATIONS.md) · Etap 17 | 2026-11-05 |
 
 ---
 
@@ -338,4 +339,21 @@ find articles without paging through the list and without exposing article text 
   2. Results hold title, authors, verification date and freshness only; no snippets or counts.
   3. Suspended, revoked, hidden and non-canonical text cannot be found, from the moment the change commits.
   4. Queries are limited and fail closed; query text is neither logged nor audited; overlapping articles are not penalised.
+- **Delivery:** plan (this commit).
+
+---
+
+## US-11
+
+**Story:** As an expert or author I want to be told when something needs me or when a decision was made on my
+article, so that I do not have to keep checking the application.
+
+- **Source:** product owner request, 2026-11-05, after comparing the project with [ICS](https://github.com/inprojectspl/ics).
+- **Status:** PLANNED 2026-11-05.
+- **Plan:** [docs/implementation/17_NOTIFICATIONS.md](implementation/17_NOTIFICATIONS.md)
+- **Acceptance criteria:**
+  1. Experts, authors and co-authors are told about review requests, decisions, revision alerts and (weekly) overdue reviews, never about their own actions.
+  2. Emails are on by default, can be turned off per event type, and contain only event types, counts and a link.
+  3. Titles appear in the app only if the reader may still open the article; withdrawal never reveals who withdrew.
+  4. Without SMTP the app works; mail failures never fail a user action or lose a notification.
 - **Delivery:** plan (this commit).

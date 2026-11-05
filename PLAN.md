@@ -300,3 +300,12 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [ ] 16.3 API `GET /wiki/search`: wyniki bez tekstu, limity (fail closed), bez zapisu treści zapytań, kontrakt importów, sygnał ryzyka
 - [ ] 16.4 Frontend: pole wyszukiwania w `/wiki`, adres `?q=`, anulowanie starych zapytań, osobne stany, 360 px
 - [ ] 16.5 E2E (scenariusz 18), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 17: Powiadomienia w aplikacji i e-mailem (US-11)
+*Dokumentacja: [docs/implementation/17_NOTIFICATIONS.md](docs/implementation/17_NOTIFICATIONS.md)*
+- [ ] 17.1 Model danych (migracja 0031, RLS), zdarzenia zapisywane w transakcji zmiany, bez honeypotów i bez wskazania wycofującego
+- [ ] 17.2 Rozsyłanie przez zadanie beat: odbiorcy, deduplikacja, tygodniowe podsumowanie zaległych, retencja
+- [ ] 17.3 API: lista, licznik, oznaczanie jako przeczytane, preferencje; kontrola dostępu przy odczycie
+- [ ] 17.4 E-mail: usługa `worker-notify` (minimum sekretów), paczki bez tytułów i treści, w języku odbiorcy, ponowienia, dokumentacja wdrożenia
+- [ ] 17.5 Frontend: dzwonek w menu, strona `/notifications`, preferencje, odnośniki do recenzji
+- [ ] 17.6 E2E (scenariusz 19, Mailpit), przegląd bezpieczeństwa i dokumentacja
