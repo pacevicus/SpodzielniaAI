@@ -292,3 +292,11 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [ ] 15.3 Świeżość w odpowiedziach wiki i cytowaniach czatu (bez zmian w pobieraniu i promptach), lista zaległych, ustawienie domyślnego okresu dla ADMIN
 - [ ] 15.4 Frontend: oznaczenia w wiki i czacie, zakładka „Do przeglądu”, okres w formularzu decyzji, ustawienie administratora
 - [ ] 15.5 E2E (scenariusz 17), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 16: Wyszukiwanie w Wiki (US-10)
+*Dokumentacja: [docs/implementation/16_WIKI_SEARCH.md](docs/implementation/16_WIKI_SEARCH.md)*
+- [ ] 16.1 Ocena lematyzatora `simplemma` na polskich słowach z dziedziny (zestaw testowy, próg, pamięć w `api`) przed dalszą pracą
+- [ ] 16.2 Indeks `article_search` (migracja 0030, konfiguracja z `unaccent`, GIN), odświeżanie w transakcji zmiany statusu i zgody, polecenie przebudowy, kontrola spójności
+- [ ] 16.3 API `GET /wiki/search`: wyniki bez tekstu, limity (fail closed), bez zapisu treści zapytań, kontrakt importów, sygnał ryzyka
+- [ ] 16.4 Frontend: pole wyszukiwania w `/wiki`, adres `?q=`, anulowanie starych zapytań, osobne stany, 360 px
+- [ ] 16.5 E2E (scenariusz 18), przegląd bezpieczeństwa i dokumentacja
