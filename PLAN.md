@@ -309,3 +309,11 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [ ] 17.4 E-mail: usługa `worker-notify` (minimum sekretów), paczki bez tytułów i treści, w języku odbiorcy, ponowienia, dokumentacja wdrożenia
 - [ ] 17.5 Frontend: dzwonek w menu, strona `/notifications`, preferencje, odnośniki do recenzji
 - [ ] 17.6 E2E (scenariusz 19, Mailpit), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 18: Zależności między artykułami (US-12)
+*Dokumentacja: [docs/implementation/18_ARTICLE_DEPENDENCIES.md](docs/implementation/18_ARTICLE_DEPENDENCIES.md)*
+- [ ] 18.1 Model danych (migracja 0032), znacznik `basis_changed_at` ustawiany przy opuszczeniu statusu kanonicznego (jeden poziom), nowa wartość świeżości
+- [ ] 18.2 API: powiązania w recenzji i później, „Nadal aktualny” z podmianą źródła, filtr widoczności, zmiana cytowań
+- [ ] 18.3 Powiadomienie o zmianie źródła (jeśli Etap 17 jest gotowy)
+- [ ] 18.4 Frontend: wybór źródeł, propozycja podmiany, ostrzeżenie w artykule
+- [ ] 18.5 E2E (scenariusz 20), przegląd bezpieczeństwa i dokumentacja

@@ -26,6 +26,7 @@ committed, add the commit hash to the story's *Delivery* list.
 | [US-09](#us-09) | Article review dates and freshness: overdue articles warn and stay in chat; experts reconfirm them | PLANNED | [15_ARTICLE_REVIEW_DATES.md](implementation/15_ARTICLE_REVIEW_DATES.md) · Etap 15 | 2026-11-05 |
 | [US-10](#us-10) | Wiki search: full text with Polish word forms; results show no article text | PLANNED | [16_WIKI_SEARCH.md](implementation/16_WIKI_SEARCH.md) · Etap 16 | 2026-11-05 |
 | [US-11](#us-11) | Notifications in the app and by email, with no article titles or text in emails | PLANNED | [17_NOTIFICATIONS.md](implementation/17_NOTIFICATIONS.md) · Etap 17 | 2026-11-05 |
+| [US-12](#us-12) | Article dependencies: experts link articles; a changed source flags direct dependents | PLANNED | [18_ARTICLE_DEPENDENCIES.md](implementation/18_ARTICLE_DEPENDENCIES.md) · Etap 18 | 2026-11-05 |
 
 ---
 
@@ -356,4 +357,21 @@ article, so that I do not have to keep checking the application.
   2. Emails are on by default, can be turned off per event type, and contain only event types, counts and a link.
   3. Titles appear in the app only if the reader may still open the article; withdrawal never reveals who withdrew.
   4. Without SMTP the app works; mail failures never fail a user action or lose a notification.
+- **Delivery:** plan (this commit).
+
+---
+
+## US-12
+
+**Story:** As an expert I want to record that an article relies on another one, so that when the source is
+replaced or withdrawn, the articles built on it are flagged for review.
+
+- **Source:** product owner request, 2026-11-05, after comparing the project with [ICS](https://github.com/inprojectspl/ics).
+- **Status:** PLANNED 2026-11-05.
+- **Plan:** [docs/implementation/18_ARTICLE_DEPENDENCIES.md](implementation/18_ARTICLE_DEPENDENCIES.md)
+- **Acceptance criteria:**
+  1. Experts add `depends_on` links during review or later; invalid links are refused.
+  2. When a source leaves CANONICAL, direct dependents get a warning and stay in chat; the reason is never shown.
+  3. Reconfirming clears the flag and can re-point the link to the successor.
+  4. Sources a reader may not open stay hidden, and honeypots can never be linked.
 - **Delivery:** plan (this commit).
