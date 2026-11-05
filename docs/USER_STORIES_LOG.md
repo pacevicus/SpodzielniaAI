@@ -23,6 +23,7 @@ committed, add the commit hash to the story's *Delivery* list.
 | [US-06](#us-06) | The UI works like Open Notebook — menu on the left, workspace on the right — on desktops and phones | DONE | [12_APP_SHELL_RESPONSIVE.md](implementation/12_APP_SHELL_RESPONSIVE.md) · Etap 12 | 2026-10-26 |
 | [US-07](#us-07) | Administrator brands the UI: organisation name, logo (and favicon) and colours | DONE | [13_BRANDING.md](implementation/13_BRANDING.md) · Etap 13 | 2026-10-26 |
 | [US-08](#us-08) | User selects the UI language (Polish or English); the UI reloads in the chosen language | DONE | [14_UI_LANGUAGE.md](implementation/14_UI_LANGUAGE.md) · Etap 14 | 2026-10-26 |
+| [US-09](#us-09) | Article review dates and freshness: overdue articles warn and stay in chat; experts reconfirm them | PLANNED | [15_ARTICLE_REVIEW_DATES.md](implementation/15_ARTICLE_REVIEW_DATES.md) · Etap 15 | 2026-11-05 |
 
 ---
 
@@ -303,3 +304,20 @@ is in the chosen language.
   4. No user-visible string is hard-coded in the frontend; the two catalogues have the same keys
      and placeholders; existing E2E scenarios pass in Polish.
 - **Delivery:** `14bef00` plan · 14.1–14.6 locale on the account and the `lang` cookie (migration 0028), server texts in both languages, English answers with a cross-language verbatim check and an English watermark, `next-intl` catalogues for every screen, the language switch, E2E scenario 16 (this commit).
+
+---
+
+## US-09
+
+**Story:** As a member I want to see whether an article has been checked recently, and as an expert I want
+overdue articles brought to my attention, so that old knowledge is reviewed without disappearing.
+
+- **Source:** product owner request, 2026-11-05, after comparing the project with [ICS](https://github.com/inprojectspl/ics).
+- **Status:** PLANNED 2026-11-05.
+- **Plan:** [docs/implementation/15_ARTICLE_REVIEW_DATES.md](implementation/15_ARTICLE_REVIEW_DATES.md)
+- **Acceptance criteria:**
+  1. Overdue articles stay CANONICAL and in chat, with a warning on the page and in citations.
+  2. The period is 12 months by default (admin setting), or 1-60 months per article (expert).
+  3. A non-author expert with MFA can confirm an article is still current, with no new version or index change.
+  4. Experts have an overdue list; honeypots never appear on it.
+- **Delivery:** plan (this commit).

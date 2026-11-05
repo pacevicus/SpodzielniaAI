@@ -284,3 +284,11 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [x] 14.4 Recenzje i konsole administratora w katalogu; kontrola braku tekstów na sztywno (diakrytyki + ESLint `no-literal-string`)
 - [x] 14.5 Odpowiedzi czatu po angielsku bez osłabienia ochrony przed destylacją (angielskie sloty znaku wodnego, wielojęzyczna kontrola dosłowności przez embeddingi, bez modelu embeddingów odpowiedź po polsku, angielskie frazy ekstrakcji i injection)
 - [x] 14.6 E2E (scenariusz 16), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 15: Daty przeglądu artykułów i świeżość (US-09)
+*Dokumentacja: [docs/implementation/15_ARTICLE_REVIEW_DATES.md](docs/implementation/15_ARTICLE_REVIEW_DATES.md)*
+- [ ] 15.1 Model danych (migracja 0029: `review_due_at`, okres na artykule, `wiki_settings`), czysta funkcja świeżości, uzupełnienie istniejących artykułów
+- [ ] 15.2 Ustawianie daty przy zatwierdzeniu, akcja „Nadal aktualny” (ekspert z MFA, nie autor, kontrola wersji, audyt bez treści)
+- [ ] 15.3 Świeżość w odpowiedziach wiki i cytowaniach czatu (bez zmian w pobieraniu i promptach), lista zaległych, ustawienie domyślnego okresu dla ADMIN
+- [ ] 15.4 Frontend: oznaczenia w wiki i czacie, zakładka „Do przeglądu”, okres w formularzu decyzji, ustawienie administratora
+- [ ] 15.5 E2E (scenariusz 17), przegląd bezpieczeństwa i dokumentacja
