@@ -317,3 +317,12 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [ ] 18.3 Powiadomienie o zmianie źródła (jeśli Etap 17 jest gotowy)
 - [ ] 18.4 Frontend: wybór źródeł, propozycja podmiany, ostrzeżenie w artykule
 - [ ] 18.5 E2E (scenariusz 20), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 19: Bramki jakości w CI (US-13)
+*Dokumentacja: [docs/implementation/19_QUALITY_GATES.md](docs/implementation/19_QUALITY_GATES.md)*
+- [ ] 19.1 Pokrycie backendu: połączenie testów jednostkowych i integracyjnych, próg od zmierzonej wartości
+- [ ] 19.2 Pokrycie frontendu: `@vitest/coverage-v8`, progi, `test:coverage` w CI
+- [ ] 19.3 Kontrola rozmiaru plików (500 linii) z listą bazową, która może tylko maleć; `make check`
+- [ ] 19.4 `pytest-xdist`: najpierw testy jednostkowe, integracyjne tylko po pomiarach
+- [ ] 19.5 Nocny i ręczny przebieg E2E w CI na tymczasowym stosie, raporty, lista pomijanych scenariuszy
+- [ ] 19.6 Dokumentacja (`AGENTS.md`, `CONTRIBUTING.md`) i przegląd bezpieczeństwa

@@ -27,6 +27,7 @@ committed, add the commit hash to the story's *Delivery* list.
 | [US-10](#us-10) | Wiki search: full text with Polish word forms; results show no article text | PLANNED | [16_WIKI_SEARCH.md](implementation/16_WIKI_SEARCH.md) · Etap 16 | 2026-11-05 |
 | [US-11](#us-11) | Notifications in the app and by email, with no article titles or text in emails | PLANNED | [17_NOTIFICATIONS.md](implementation/17_NOTIFICATIONS.md) · Etap 17 | 2026-11-05 |
 | [US-12](#us-12) | Article dependencies: experts link articles; a changed source flags direct dependents | PLANNED | [18_ARTICLE_DEPENDENCIES.md](implementation/18_ARTICLE_DEPENDENCIES.md) · Etap 18 | 2026-11-05 |
+| [US-13](#us-13) | Engineering quality gates: coverage and file-size ratchets, xdist, nightly E2E | PLANNED | [19_QUALITY_GATES.md](implementation/19_QUALITY_GATES.md) · Etap 19 | 2026-11-05 |
 
 ---
 
@@ -374,4 +375,21 @@ replaced or withdrawn, the articles built on it are flagged for review.
   2. When a source leaves CANONICAL, direct dependents get a warning and stay in chat; the reason is never shown.
   3. Reconfirming clears the flag and can re-point the link to the successor.
   4. Sources a reader may not open stay hidden, and honeypots can never be linked.
+- **Delivery:** plan (this commit).
+
+---
+
+## US-13
+
+**Story:** As a maintainer I want CI to stop quality getting worse, so that coverage, file sizes and end-to-end
+behaviour are checked by machines, without a large refactor before the next feature.
+
+- **Source:** product owner request, 2026-11-05, after comparing the project with [ICS](https://github.com/inprojectspl/ics).
+- **Status:** PLANNED 2026-11-05.
+- **Plan:** [docs/implementation/19_QUALITY_GATES.md](implementation/19_QUALITY_GATES.md)
+- **Acceptance criteria:**
+  1. Combined backend and frontend coverage cannot fall below recorded minimums.
+  2. New files are at most 500 lines; the 12 oversized files are on a baseline that can only shrink.
+  3. `pytest-xdist` is adopted only where timings prove a gain.
+  4. Playwright runs nightly and on demand on a throwaway stack, without blocking PRs; skipped scenarios are listed.
 - **Delivery:** plan (this commit).
