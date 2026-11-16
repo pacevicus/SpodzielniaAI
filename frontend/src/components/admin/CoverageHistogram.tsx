@@ -102,6 +102,7 @@ export function CoverageHistogram({ users }: { users: UserCoverage[] }) {
       <details className="text-sm">
         <summary className="cursor-pointer text-text-muted">{t("histogram.table")}</summary>
         <table className="mt-2 text-left">
+          <caption className="sr-only">{t("histogram.table")}</caption>
           <thead>
             <tr>
               <th className="pr-6 font-medium">{t("histogram.closeness")}</th>

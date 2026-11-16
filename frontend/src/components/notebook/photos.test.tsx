@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
 import { useState } from "react";
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ImageAnnotator } from "@/components/annotator/ImageAnnotator";
 import { AtlasSubmissionPanel } from "@/components/notebook/AtlasSubmissionPanel";
@@ -15,6 +15,9 @@ import type { Recognition } from "@/lib/recognition";
 import { clampBox, type Mark, type Photo } from "@/lib/photos";
 import type { Attachment } from "@/lib/upload";
 import { API, renderWithClient } from "@/test/render";
+
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 const server = setupServer();
 beforeAll(() => server.listen({ onUnhandledFrame: "error" }));
@@ -214,6 +217,32 @@ describe("PhotoEditor", () => {
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Zdjęcie zmieniło się w innej karcie");
     expect(within(alert).getByRole("button", { name: "Wczytaj ponownie" })).toBeInTheDocument();
+  });
+
+  it("asks in the app's dialog before a domain change drops the labels", async () => {
+    const OTHER: Domain = { ...BEES, id: "d2", slug: "ogrod", name: "Ogród" };
+    mountEditor(photo(), () => HttpResponse.json(photo()), [BEES, OTHER]);
+    const select = await screen.findByLabelText("Dziedzina");
+    await screen.findByRole("option", { name: "Ogród" });
+    await userEvent.selectOptions(select, "d2");
+    const dialog = screen.getByRole("dialog", { name: /Zmiana dziedziny usunie etykiety/ });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Anuluj" }));
+    expect(select).toHaveValue("d1");
+    expect(screen.getByRole("button", { name: "Zapisz" })).toBeDisabled();
+
+    await userEvent.selectOptions(select, "d2");
+    await userEvent.click(screen.getByRole("button", { name: "Zmień dziedzinę" }));
+    expect(select).toHaveValue("d2");
+    expect(screen.getByRole("button", { name: "Zapisz" })).toBeDisabled(); // the mark lost its label
+  });
+
+  it("asks before leaving with unsaved changes", async () => {
+    mountEditor(photo(), () => HttpResponse.json(photo()));
+    await userEvent.type(await screen.findByLabelText("Opis zdjęcia"), "!");
+    await userEvent.click(screen.getByRole("link", { name: "← Notatka" }));
+    expect(push).not.toHaveBeenCalled();
+    await userEvent.click(within(screen.getByRole("dialog", { name: /niezapisane zmiany/ })).getByRole("button", { name: "Wyjdź bez zapisywania" }));
+    expect(push).toHaveBeenCalledWith("/notebook/n1");
   });
 
   it("needs a domain first and a label on every mark", async () => {

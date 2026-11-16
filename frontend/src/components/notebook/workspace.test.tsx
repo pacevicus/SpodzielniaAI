@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { setupServer } from "msw/node";
@@ -9,7 +9,8 @@ import { NotebookList } from "@/components/notebook/NotebookList";
 import { API, renderWithClient } from "@/test/render";
 import { setTestLocale } from "@/test/rtl";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+const push = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 // BlockNote needs a real browser; the workspace layout is what is under test here.
 vi.mock("next/dynamic", () => ({ default: () => () => <div role="textbox" aria-label="Edytor notatki" /> }));
 
@@ -54,6 +55,27 @@ describe("NoteWorkspace (12.3)", () => {
     // The phone hides the other panels with a container query; they stay mounted.
     expect(sources).toHaveClass("@max-3xl:hidden");
     expect(notePanel).not.toHaveClass("@max-3xl:hidden");
+  });
+
+  it("deletes the note only after confirming in the app's dialog", async () => {
+    note();
+    let deleted = 0;
+    server.use(
+      http.delete(`${API}/notes/${NOTE}`, () => {
+        deleted += 1;
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    renderWithClient(<NoteWorkspace noteId={NOTE} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Usuń notatkę" }));
+    const dialog = screen.getByRole("dialog", { name: /Usunąć notatkę wraz z załącznikami/ });
+    await userEvent.click(within(dialog).getByRole("button", { name: "Anuluj" }));
+    expect(deleted).toBe(0);
+
+    await userEvent.click(screen.getByRole("button", { name: "Usuń notatkę" }));
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Usuń notatkę" }));
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/notebook"));
+    expect(deleted).toBe(1);
   });
 
   it("switches panels on a phone without unmounting the editor", async () => {

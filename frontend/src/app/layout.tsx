@@ -33,7 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 // `cover` lets the shell pad for notches and the home indicator (env(safe-area-inset-*)).
-export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
+// `colorScheme` emits <meta name="color-scheme">: native controls and the first paint follow the theme.
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", colorScheme: "light dark" };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Reading the request headers makes every page render per request: the CSP nonce from

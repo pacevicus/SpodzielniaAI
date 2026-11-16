@@ -13,6 +13,7 @@ import { PhotosPanel } from "@/components/notebook/PhotosPanel";
 import { LinkDialog } from "@/components/notebook/LinkDialog";
 import { UploadZone } from "@/components/notebook/UploadZone";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/Dialog";
 import { cn } from "@/components/ui/cn";
 import { Tabs } from "@/components/ui/Tabs";
 import { ApiError } from "@/lib/api";
@@ -41,6 +42,7 @@ export function NoteWorkspace({ noteId }: { noteId: string }) {
   const save = useSaveNote(noteId);
   const remove = useDeleteNote();
   const router = useRouter();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [linkOpen, setLinkOpen] = useState(false);
   const [tab, setTab] = useState<Panel>("note");
   const autosave = useAutosave((change: { title?: string; body?: string }) => save.mutateAsync(change));
@@ -103,16 +105,23 @@ export function NoteWorkspace({ noteId }: { noteId: string }) {
               variant="ghost"
               className="text-danger"
               busy={remove.isPending}
-              onClick={async () => {
-                if (window.confirm(t("confirmDelete"))) {
-                  await remove.mutateAsync(noteId);
-                  router.push("/notebook");
-                }
-              }}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 aria-hidden className="size-4" />
               {t("delete")}
             </Button>
+            <ConfirmDialog
+              open={confirmDelete}
+              title={t("confirmDelete")}
+              confirmLabel={t("delete")}
+              danger
+              busy={remove.isPending}
+              onCancel={() => setConfirmDelete(false)}
+              onConfirm={async () => {
+                await remove.mutateAsync(noteId);
+                router.push("/notebook");
+              }}
+            />
           </div>
         </section>
         <div className="flex min-w-0 flex-col gap-4 @6xl:contents">

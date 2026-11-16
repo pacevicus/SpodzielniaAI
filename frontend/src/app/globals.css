@@ -3,6 +3,9 @@
 /* Cooperative palette: honey (primary), heather (accent), meadow (ok), ember (danger). Light values
    meet WCAG AA as text and badges (4.5:1) and white on --primary (12.8, axe). */
 :root {
+  /* Native UI (scrollbars, form controls, pickers, the canvas) follows the theme below. */
+  color-scheme: light dark;
+  accent-color: var(--primary);
   --bg: #fbf8f1;
   --surface: #ffffff;
   --surface-muted: #f3eee2;
@@ -112,6 +115,59 @@ body {
   select,
   textarea {
     font-size: max(16px, 1em);
+  }
+}
+
+/* Modal dialogs (ui/Dialog, the phone menu): the page underneath does not scroll. The backdrop
+   must be a scroll container for overscroll-behavior to apply. */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+dialog::backdrop {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+/* Fade dialogs and their backdrop in and out of the top layer. Browsers without overlay/display
+   transitions get the exit through [data-closing] (lib/top-layer.ts). */
+.modal,
+.drawer {
+  opacity: 0;
+  transition-property: opacity, transform, display, overlay;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+  transition-behavior: allow-discrete;
+}
+.modal::backdrop,
+.drawer::backdrop {
+  background-color: rgb(0 0 0 / 0);
+  transition-property: background-color, display, overlay;
+  transition-duration: 200ms;
+  transition-timing-function: ease-out;
+  transition-behavior: allow-discrete;
+}
+:is(.modal, .drawer)[open]:where(:not([data-closing])) {
+  opacity: 1;
+  @starting-style {
+    opacity: 0;
+  }
+}
+:is(.modal, .drawer)[open]:where(:not([data-closing]))::backdrop {
+  background-color: rgb(0 0 0 / 0.5);
+  @starting-style {
+    background-color: rgb(0 0 0 / 0);
+  }
+}
+/* The phone menu slides from the left (only without a reduced-motion preference). */
+@media (prefers-reduced-motion: no-preference) {
+  .drawer {
+    transform: translateX(-100%);
+  }
+  .drawer[open]:where(:not([data-closing])) {
+    transform: none;
+    @starting-style {
+      transform: translateX(-100%);
+    }
   }
 }
 
