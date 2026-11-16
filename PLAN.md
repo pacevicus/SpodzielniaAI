@@ -284,3 +284,45 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [x] 14.4 Recenzje i konsole administratora w katalogu; kontrola braku tekstów na sztywno (diakrytyki + ESLint `no-literal-string`)
 - [x] 14.5 Odpowiedzi czatu po angielsku bez osłabienia ochrony przed destylacją (angielskie sloty znaku wodnego, wielojęzyczna kontrola dosłowności przez embeddingi, bez modelu embeddingów odpowiedź po polsku, angielskie frazy ekstrakcji i injection)
 - [x] 14.6 E2E (scenariusz 16), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 15: Daty przeglądu artykułów i świeżość (US-09)
+*Dokumentacja: [docs/implementation/15_ARTICLE_REVIEW_DATES.md](docs/implementation/15_ARTICLE_REVIEW_DATES.md)*
+- [ ] 15.1 Model danych (migracja 0029: `review_due_at`, okres na artykule, `wiki_settings`), czysta funkcja świeżości, uzupełnienie istniejących artykułów
+- [ ] 15.2 Ustawianie daty przy zatwierdzeniu, akcja „Nadal aktualny” (ekspert z MFA, nie autor, kontrola wersji, audyt bez treści)
+- [ ] 15.3 Świeżość w odpowiedziach wiki i cytowaniach czatu (bez zmian w pobieraniu i promptach), lista zaległych, ustawienie domyślnego okresu dla ADMIN
+- [ ] 15.4 Frontend: oznaczenia w wiki i czacie, zakładka „Do przeglądu”, okres w formularzu decyzji, ustawienie administratora
+- [ ] 15.5 E2E (scenariusz 17), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 16: Wyszukiwanie w Wiki (US-10)
+*Dokumentacja: [docs/implementation/16_WIKI_SEARCH.md](docs/implementation/16_WIKI_SEARCH.md)*
+- [ ] 16.1 Ocena lematyzatora `simplemma` na polskich słowach z dziedziny (zestaw testowy, próg, pamięć w `api`) przed dalszą pracą
+- [ ] 16.2 Indeks `article_search` (migracja 0030, konfiguracja z `unaccent`, GIN), odświeżanie w transakcji zmiany statusu i zgody, polecenie przebudowy, kontrola spójności
+- [ ] 16.3 API `GET /wiki/search`: wyniki bez tekstu, limity (fail closed), bez zapisu treści zapytań, kontrakt importów, sygnał ryzyka
+- [ ] 16.4 Frontend: pole wyszukiwania w `/wiki`, adres `?q=`, anulowanie starych zapytań, osobne stany, 360 px
+- [ ] 16.5 E2E (scenariusz 18), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 17: Powiadomienia w aplikacji i e-mailem (US-11)
+*Dokumentacja: [docs/implementation/17_NOTIFICATIONS.md](docs/implementation/17_NOTIFICATIONS.md)*
+- [ ] 17.1 Model danych (migracja 0031, RLS), zdarzenia zapisywane w transakcji zmiany, bez honeypotów i bez wskazania wycofującego
+- [ ] 17.2 Rozsyłanie przez zadanie beat: odbiorcy, deduplikacja, tygodniowe podsumowanie zaległych, retencja
+- [ ] 17.3 API: lista, licznik, oznaczanie jako przeczytane, preferencje; kontrola dostępu przy odczycie
+- [ ] 17.4 E-mail: usługa `worker-notify` (minimum sekretów), paczki bez tytułów i treści, w języku odbiorcy, ponowienia, dokumentacja wdrożenia
+- [ ] 17.5 Frontend: dzwonek w menu, strona `/notifications`, preferencje, odnośniki do recenzji
+- [ ] 17.6 E2E (scenariusz 19, Mailpit), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 18: Zależności między artykułami (US-12)
+*Dokumentacja: [docs/implementation/18_ARTICLE_DEPENDENCIES.md](docs/implementation/18_ARTICLE_DEPENDENCIES.md)*
+- [ ] 18.1 Model danych (migracja 0032), znacznik `basis_changed_at` ustawiany przy opuszczeniu statusu kanonicznego (jeden poziom), nowa wartość świeżości
+- [ ] 18.2 API: powiązania w recenzji i później, „Nadal aktualny” z podmianą źródła, filtr widoczności, zmiana cytowań
+- [ ] 18.3 Powiadomienie o zmianie źródła (jeśli Etap 17 jest gotowy)
+- [ ] 18.4 Frontend: wybór źródeł, propozycja podmiany, ostrzeżenie w artykule
+- [ ] 18.5 E2E (scenariusz 20), przegląd bezpieczeństwa i dokumentacja
+
+### Etap 19: Bramki jakości w CI (US-13)
+*Dokumentacja: [docs/implementation/19_QUALITY_GATES.md](docs/implementation/19_QUALITY_GATES.md)*
+- [ ] 19.1 Pokrycie backendu: połączenie testów jednostkowych i integracyjnych, próg od zmierzonej wartości
+- [ ] 19.2 Pokrycie frontendu: `@vitest/coverage-v8`, progi, `test:coverage` w CI
+- [ ] 19.3 Kontrola rozmiaru plików (500 linii) z listą bazową, która może tylko maleć; `make check`
+- [ ] 19.4 `pytest-xdist`: najpierw testy jednostkowe, integracyjne tylko po pomiarach
+- [ ] 19.5 Nocny i ręczny przebieg E2E w CI na tymczasowym stosie, raporty, lista pomijanych scenariuszy
+- [ ] 19.6 Dokumentacja (`AGENTS.md`, `CONTRIBUTING.md`) i przegląd bezpieczeństwa
