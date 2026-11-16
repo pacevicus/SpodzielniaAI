@@ -1,11 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Button } from "@/components/ui/Button";
 import { DataTable, TBody, Td, Th, THead, Tr } from "@/components/ui/DataTable";
-import { Dialog } from "@/components/ui/Dialog";
+import { ConfirmDialog, Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Loading } from "@/components/ui/Skeleton";
@@ -82,6 +82,45 @@ describe("DataTable", () => {
     const row = within(table).getByRole("row", { name: /Ul 1/ });
     expect(within(row).getByRole("cell", { name: "10" })).toHaveAttribute("data-label", "Ramki");
   });
+
+  describe("scroll region", () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    function mount(scrollWidth: number) {
+      vi.stubGlobal(
+        "ResizeObserver",
+        class {
+          constructor(private readonly cb: () => void) {}
+          observe() {
+            this.cb();
+          }
+          disconnect() {}
+        },
+      );
+      vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(scrollWidth);
+      vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(500);
+      render(
+        <DataTable label="Ule">
+          <TBody>
+            <Tr>
+              <Td>Ul 1</Td>
+            </Tr>
+          </TBody>
+        </DataTable>,
+      );
+    }
+
+    it("is a focusable, named region while the table scrolls sideways", () => {
+      mount(900);
+      expect(screen.getByRole("region", { name: "Ule" })).toHaveAttribute("tabindex", "0");
+    });
+
+    it("adds no tab stop when nothing scrolls", () => {
+      mount(500);
+      expect(screen.queryByRole("region")).not.toBeInTheDocument();
+      expect(screen.getByRole("table").parentElement).not.toHaveAttribute("tabindex");
+    });
+  });
 });
 
 describe("PageHeader, EmptyState, Loading", () => {
@@ -129,5 +168,44 @@ describe("Button and Dialog", () => {
       </Dialog>,
     );
     expect(screen.getByRole("dialog", { name: "Potwierdź" })).toHaveTextContent("treść");
+  });
+
+  it("gives each dialog its own title id", () => {
+    render(
+      <>
+        <Dialog open title="Pierwszy" onClose={() => undefined}>
+          a
+        </Dialog>
+        <Dialog open title="Drugi" onClose={() => undefined}>
+          b
+        </Dialog>
+      </>,
+    );
+    expect(screen.getByRole("dialog", { name: "Pierwszy" })).toHaveTextContent("a");
+    expect(screen.getByRole("dialog", { name: "Drugi" })).toHaveTextContent("b");
+  });
+
+  it("routes Escape (cancel) through onClose, so the state closes it", () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog open title="Potwierdź" onClose={onClose}>
+        treść
+      </Dialog>,
+    );
+    const cancel = new Event("cancel", { cancelable: true });
+    fireEvent(screen.getByRole("dialog"), cancel);
+    expect(cancel.defaultPrevented).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks a yes/no question", async () => {
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(<ConfirmDialog open title="Usunąć?" confirmLabel="Usuń" danger onConfirm={onConfirm} onCancel={onCancel} />);
+    const dialog = within(screen.getByRole("dialog", { name: "Usunąć?" }));
+    await userEvent.click(dialog.getByRole("button", { name: "Anuluj" }));
+    expect(onCancel).toHaveBeenCalled();
+    await userEvent.click(dialog.getByRole("button", { name: "Usuń" }));
+    expect(onConfirm).toHaveBeenCalled();
   });
 });

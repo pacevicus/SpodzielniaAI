@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
@@ -127,6 +127,18 @@ describe("ChatView", () => {
     renderWithClient(<ChatView ask={async () => ({ kind: "throttled", retryAfterSeconds: 1800 })} />);
     await askQuestion();
     expect(await screen.findByRole("alert")).toHaveTextContent("Spróbuj ponownie za 30 min.");
+  });
+
+  it("does not send on the Enter that confirms an IME composition", async () => {
+    const ask = vi.fn<Ask>(async () => answer("Ok [1]."));
+    renderWithClient(<ChatView ask={ask} />);
+    const box = screen.getByLabelText("Twoje pytanie");
+    await userEvent.type(box, "ミツバチの病気");
+    fireEvent.keyDown(box, { key: "Enter", isComposing: true });
+    fireEvent.keyDown(box, { key: "Enter", keyCode: 229 }); // Safari: compositionend came first
+    expect(ask).not.toHaveBeenCalled();
+    fireEvent.keyDown(box, { key: "Enter" });
+    await waitFor(() => expect(ask).toHaveBeenCalledTimes(1));
   });
 
   it("does not ask twice while an answer is pending", async () => {

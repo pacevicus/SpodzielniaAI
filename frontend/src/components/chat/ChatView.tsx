@@ -151,12 +151,16 @@ export function ChatView({ ask = askCooperative, solve = solveInBackground }: { 
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
+              // Enter that confirms an IME composition (Japanese, Chinese, Korean...) must not send;
+              // Safari reports it only through keyCode 229.
+              if (event.nativeEvent.isComposing || event.keyCode === 229) return;
               event.preventDefault();
               event.currentTarget.form?.requestSubmit();
             }
           }}
           placeholder={t("placeholder")}
-          className="resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm"
+          // Grows with the question up to 40% of the screen (field-sizing; fixed 2 rows elsewhere).
+          className="resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm field-sizing-content min-h-[calc(2lh+1rem)] max-h-[40dvh]"
         />
         <div className="flex items-center justify-between text-xs text-text-muted">
           <span>

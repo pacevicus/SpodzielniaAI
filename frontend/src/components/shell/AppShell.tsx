@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useBranding } from "@/lib/branding-context";
 import { saveCollapsed } from "@/lib/sidebar";
+import { closeModal, isBackdropClick, openModal, supportsClosedBy } from "@/lib/top-layer";
 
 import { BrandMark } from "./BrandMark";
 import { Sidebar } from "./Sidebar";
@@ -71,33 +72,46 @@ export function AppShell({
   );
 }
 
-/** The menu over the workspace: a native modal `<dialog>` (focus trap, Escape, focus return). */
+/**
+ * The menu over the workspace: a native modal `<dialog>` (focus trap, Escape, focus return). It
+ * slides in and out (`.drawer` in globals.css); a tap on the backdrop closes it (`closedby`, with
+ * a click-point fallback for browsers without it).
+ */
 function Drawer({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
   const t = useTranslations("shell");
   const ref = useRef<HTMLDialogElement>(null);
+  // The content stays mounted while the dialog animates out.
+  const [shown, setShown] = useState(open);
+  if (open && !shown) setShown(true);
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (open && !dialog.open) {
-      if (typeof dialog.showModal === "function") dialog.showModal();
-      else dialog.setAttribute("open", ""); // environments without <dialog> support (jsdom)
-    }
-    if (!open && dialog.open) {
-      if (typeof dialog.close === "function") dialog.close();
-      else dialog.removeAttribute("open");
-    }
+    if (open) openModal(dialog);
+    else
+      void closeModal(dialog).then(() => {
+        if (!dialog.open) setShown(false);
+      });
   }, [open]);
   return (
     <dialog
       ref={ref}
       aria-label={t("menu")}
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose(); // the backdrop
+      // Not in React's types yet; light dismiss for browsers that support it.
+      {...({ closedby: "any" } as object)}
+      onCancel={(event) => {
+        // Escape and light dismiss: let the state close it, so it animates out.
+        event.preventDefault();
+        onClose();
       }}
-      className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] border-0 bg-sidebar p-0 shadow-xl transition-transform duration-200 backdrop:bg-black/50 starting:open:-translate-x-full"
+      onClose={() => {
+        if (open) onClose();
+      }}
+      onClick={(event) => {
+        if (!supportsClosedBy() && isBackdropClick(event.currentTarget, event)) onClose();
+      }}
+      className="drawer fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-72 max-w-[85vw] border-0 bg-sidebar p-0 shadow-xl"
     >
-      {open && children}
+      {shown && children}
     </dialog>
   );
 }
