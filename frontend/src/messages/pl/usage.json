@@ -1,0 +1,39 @@
+{
+  "period": {
+    "legend": "Okres",
+    "from": "Od",
+    "to": "Do",
+    "show": "Pokaż",
+    "last30": "Ostatnie 30 dni",
+    "invalid": "Data „do” jest wcześniej niż data „od”.",
+    "tooLong": "Okres może obejmować najwyżej rok."
+  },
+  "totals": {
+    "calls": "Wywołania",
+    "tokens": "Tokeny razem",
+    "promptTokens": "Tokeny wejściowe",
+    "completionTokens": "Tokeny wyjściowe",
+    "cost": "Koszt szacunkowy",
+    "costNote": "{currency}, szacunek"
+  },
+  "member": {
+    "title": "Zużycie AI",
+    "description": "Moc obliczeniowa modeli AI zużyta przez Twoje zapytania i przetwarzanie dokumentów. Koszty są szacunkowe.",
+    "byPurpose": "Według zadania",
+    "empty": "W tym okresie nie użyto modeli AI."
+  },
+  "admin": {
+    "title": "Zużycie AI w spółdzielni",
+    "description": "Zużycie wszystkich członków oraz pracy systemowej w wybranym okresie. Koszty są szacunkowe.",
+    "system": "Praca systemowa (bez członka)",
+    "all": "Razem",
+    "members": "Członkowie",
+    "member": "Członek",
+    "byPurpose": "Według zadania",
+    "noMembers": "W tym okresie członkowie nie użyli modeli AI.",
+    "priceNote": "Ceny obowiązują od aktywacji wersji konfiguracji, w której je zapisano."
+  },
+  "unpriced": "{count, plural, one {# wywołanie bez ceny modelu: nie wliczono kosztu} few {# wywołania bez ceny modelu: nie wliczono kosztu} many {# wywołań bez ceny modelu: nie wliczono kosztu} other {# wywołania bez ceny modelu: nie wliczono kosztu}}",
+  "failed": "Nie udało się wczytać danych o zużyciu. Spróbuj ponownie.",
+  "loading": "Wczytywanie…"
+}

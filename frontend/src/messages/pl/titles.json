@@ -17,5 +17,7 @@
   "security": "Bezpieczeństwo",
   "users": "Użytkownicy",
   "adminAtlas": "Atlas",
-  "article": "Artykuł"
+  "article": "Artykuł",
+  "usage": "Zużycie AI",
+  "adminUsage": "Zużycie AI w spółdzielni"
 }

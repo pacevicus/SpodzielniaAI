@@ -15,7 +15,13 @@ from spoldzielnia_ai.db.models.atlas import (
 from spoldzielnia_ai.db.models.audit import SecurityAuditLog
 from spoldzielnia_ai.db.models.branding import Branding
 from spoldzielnia_ai.db.models.index_generation import IndexGeneration
-from spoldzielnia_ai.db.models.llm import LlmConfigRevision, LlmModel, LlmProvider, LlmRouting
+from spoldzielnia_ai.db.models.llm import (
+    LlmConfigRevision,
+    LlmModel,
+    LlmProvider,
+    LlmRouting,
+    LlmUsageDaily,
+)
 from spoldzielnia_ai.db.models.model_wait import ModelWait
 from spoldzielnia_ai.db.models.outbox import VectorOutbox
 from spoldzielnia_ai.db.models.private_note import NoteAttachment, NoteDerivative, PrivateNote
@@ -40,6 +46,7 @@ __all__ = [
     "LlmModel",
     "LlmProvider",
     "LlmRouting",
+    "LlmUsageDaily",
     "ModelWait",
     "NoteAttachment",
     "NoteDerivative",

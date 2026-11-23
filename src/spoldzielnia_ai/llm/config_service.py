@@ -28,6 +28,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID
 
@@ -59,6 +60,7 @@ from spoldzielnia_ai.llm.endpoints import (
 )
 from spoldzielnia_ai.llm.gateway import PRIVATE_PURPOSES, LLMPurpose
 from spoldzielnia_ai.llm.snapshot import ConfigSnapshot, SnapshotDeployment
+from spoldzielnia_ai.llm.usage import price_to_micro
 
 if TYPE_CHECKING:
     from pydantic import JsonValue
@@ -141,6 +143,21 @@ class ProviderPatch(BaseModel):
     timeout_seconds: float | None = Field(default=None, gt=0, le=600)
 
 
+class PriceIn(BaseModel):
+    """What one million prompt and completion tokens cost, in the usage currency (15.3).
+    Both prices or none; at most six decimals (micro-units in the database)."""
+
+    price_in_per_million: Decimal = Field(ge=0, le=1_000_000)
+    price_out_per_million: Decimal = Field(ge=0, le=1_000_000)
+
+    @field_validator("price_in_per_million", "price_out_per_million")
+    @classmethod
+    def _decimals(cls, value: Decimal) -> Decimal:
+        if value != value.quantize(Decimal("0.000001")):
+            raise ValueError("at most six decimal places")
+        return value
+
+
 class ModelIn(BaseModel):
     provider_id: UUID
     model_name: str = Field(min_length=1, max_length=256)
@@ -149,6 +166,7 @@ class ModelIn(BaseModel):
     max_tokens: int | None = Field(default=None, ge=1, le=131072)
     embed_dimension: int | None = Field(default=None, ge=1, le=16384)
     notes: str | None = Field(default=None, max_length=500)
+    price: PriceIn | None = None
 
     @field_validator("model_name")
     @classmethod
@@ -180,6 +198,8 @@ class ModelPatch(BaseModel):
     max_tokens: int | None = Field(default=None, ge=1, le=131072)
     embed_dimension: int | None = Field(default=None, ge=1, le=16384)
     notes: str | None = Field(default=None, max_length=500)
+    # Sent as ``null`` (explicitly) the model becomes unpriced again.
+    price: PriceIn | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -709,6 +729,12 @@ class LlmConfigService:
                 embed_dimension=data.embed_dimension,
                 notes=data.notes,
                 created_by=actor,
+                price_in_micro=None
+                if data.price is None
+                else price_to_micro(data.price.price_in_per_million),
+                price_out_micro=None
+                if data.price is None
+                else price_to_micro(data.price.price_out_per_million),
             )
             session.add(model)
             await session.flush()
@@ -741,8 +767,20 @@ class LlmConfigService:
                     value = getattr(patch, name)
                     setattr(model, name, value)
                     changes[name] = value if name != "notes" else bool(value)
+            if "price" in fields:
+                model.price_in_micro = (
+                    None
+                    if patch.price is None
+                    else price_to_micro(patch.price.price_in_per_million)
+                )
+                model.price_out_micro = (
+                    None
+                    if patch.price is None
+                    else price_to_micro(patch.price.price_out_per_million)
+                )
+                changes["priced"] = patch.price is not None
             # New parameters, new behaviour: the last probe no longer vouches for it.
-            if fields - {"notes"}:
+            if fields - {"notes", "price"}:
                 model.last_probe_ok = None
             await AuditService(session).record(
                 EventType.LLM_MODEL_CHANGED,
@@ -948,6 +986,8 @@ class LlmConfigService:
                 structured_output=provider.structured_output,  # pyright: ignore[reportArgumentType]
                 timeout_seconds=provider.timeout_seconds,
                 embed_dimension=model.embed_dimension,
+                price_in_micro=model.price_in_micro,
+                price_out_micro=model.price_out_micro,
             )
             routes[purpose] = key
         if require_probe and unprobed:

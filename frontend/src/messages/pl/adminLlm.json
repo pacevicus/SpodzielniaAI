@@ -344,5 +344,18 @@
     "jsonInvalid": " · niepoprawny JSON",
     "error": "Błąd: {error}",
     "truncated": "Odpowiedź skrócona."
+  },
+  "prices": {
+    "header": "Cena / mln tokenów",
+    "none": "Brak ceny",
+    "edit": "Ustaw cenę",
+    "title": "Cena modelu",
+    "hint": "Cena jednego miliona tokenów wejściowych i wyjściowych w walucie szacunków zużycia. Zostaw puste, aby model nie był wyceniany.",
+    "inLabel": "Tokeny wejściowe (za mln)",
+    "outLabel": "Tokeny wyjściowe (za mln)",
+    "clear": "Usuń cenę",
+    "save": "Zapisz cenę",
+    "invalid": "Podaj ceny jako liczby nieujemne, z najwyżej sześcioma miejscami po przecinku.",
+    "saved": "Zapisano cenę. Obowiązuje po aktywacji wersji konfiguracji."
   }
 }

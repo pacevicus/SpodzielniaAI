@@ -414,6 +414,9 @@ class LlmSettings(BaseModel):
     structured_output: Literal["json_schema", "prompt"] = "json_schema"
     # Optional cloud deployment from ``.env`` (RAG only, unless its host is cleared, 10.1).
     allow_cloud: bool = False
+    # Currency label of the estimated AI usage costs (15.3, US-09). Prices are entered per model
+    # in this currency; the figures are estimates, not an invoice.
+    usage_currency: str = Field(default="PLN", pattern=r"^[A-Z]{3}$")
     cloud_base_url: str | None = None
     cloud_model: str | None = None
     cloud_api_key: SecretStr | None = None

@@ -21,6 +21,7 @@ from spoldzielnia_ai.auth.sessions import (
 )
 from spoldzielnia_ai.auth.users import DbUserDirectory, UserDirectory, UserRecord
 from spoldzielnia_ai.db.enums import Role
+from spoldzielnia_ai.llm.usage_context import set_usage_owner
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Coroutine, Mapping
@@ -157,6 +158,8 @@ async def current_user(
         raise HTTPException(
             status_code=status.HTTP_423_LOCKED, detail="Account locked", headers=clear_sid_header()
         )
+    # Every LLM call this request makes is counted for this user (15.2).
+    set_usage_owner(user.id)
     return Principal(user, session, is_mfa_satisfied(session, _settings(request).security))
 
 

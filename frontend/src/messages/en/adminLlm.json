@@ -344,5 +344,18 @@
     "jsonInvalid": " · invalid JSON",
     "error": "Error: {error}",
     "truncated": "Answer truncated."
+  },
+  "prices": {
+    "header": "Price / million tokens",
+    "none": "No price",
+    "edit": "Set price",
+    "title": "Model price",
+    "hint": "The price of one million prompt and completion tokens, in the currency of the usage estimates. Leave empty to leave the model unpriced.",
+    "inLabel": "Prompt tokens (per million)",
+    "outLabel": "Completion tokens (per million)",
+    "clear": "Remove price",
+    "save": "Save price",
+    "invalid": "Enter prices as non-negative numbers with at most six decimal places.",
+    "saved": "Price saved. It applies once the configuration revision is activated."
   }
 }

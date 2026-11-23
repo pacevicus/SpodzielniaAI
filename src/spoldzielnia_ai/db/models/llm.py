@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from uuid import UUID
 
@@ -92,7 +92,18 @@ class LlmModel(Entity):
 
     __tablename__ = "llm_model"
     __mapper_args__ = {"eager_defaults": True}  # noqa: RUF012 - SQLAlchemy reads it
-    __table_args__ = (UniqueConstraint("provider_id", "model_name", "capability"),)
+    __table_args__ = (
+        UniqueConstraint("provider_id", "model_name", "capability"),
+        CheckConstraint(
+            "price_in_micro IS NULL OR price_in_micro BETWEEN 0 AND 1000000000000",
+            name="price_in",
+        ),
+        CheckConstraint(
+            "price_out_micro IS NULL OR price_out_micro BETWEEN 0 AND 1000000000000",
+            name="price_out",
+        ),
+        CheckConstraint("(price_in_micro IS NULL) = (price_out_micro IS NULL)", name="price_pair"),
+    )
 
     provider_id: Mapped[UUID] = mapped_column(
         ForeignKey("llm_provider.id", ondelete="RESTRICT"), index=True
@@ -103,6 +114,10 @@ class LlmModel(Entity):
     max_tokens: Mapped[int | None] = mapped_column(Integer)
     embed_dimension: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str | None] = mapped_column(String(500))
+    # Price of one million prompt / completion tokens, in millionths of the usage currency
+    # (15.1). Both or neither: an unpriced model is reported as tokens only.
+    price_in_micro: Mapped[int | None] = mapped_column(BigInteger)
+    price_out_micro: Mapped[int | None] = mapped_column(BigInteger)
     disabled_at: Mapped[datetime | None]
     last_probe_at: Mapped[datetime | None]
     last_probe_ok: Mapped[bool | None]
@@ -156,3 +171,53 @@ class LlmRouting(Base):
     model_id: Mapped[UUID] = mapped_column(
         ForeignKey("llm_model.id", ondelete="RESTRICT"), index=True
     )
+
+
+class LlmUsageDaily(Base):
+    """Usage counters (15.1, US-09): one row per day, user (NULL = system work), purpose and
+    model. Counters only: no prompt, answer or file content is ever stored. Not RLS-protected
+    (like ``llm_model``): the API filters by the caller's own ``user_id``, and only ADMIN reads
+    all rows. Deleting a user removes their counters (``ON DELETE CASCADE``)."""
+
+    __tablename__ = "llm_usage_daily"
+    __table_args__ = (
+        Index(
+            "uq_llm_usage_daily_user",
+            "day",
+            "user_id",
+            "purpose",
+            "model",
+            unique=True,
+            postgresql_where=text("user_id IS NOT NULL"),
+        ),
+        Index(
+            "uq_llm_usage_daily_system",
+            "day",
+            "purpose",
+            "model",
+            unique=True,
+            postgresql_where=text("user_id IS NULL"),
+        ),
+        Index("ix_llm_usage_daily_day", "day"),
+        CheckConstraint(
+            "calls >= 0 AND unpriced_calls >= 0 AND unpriced_calls <= calls",
+            name="calls_counted",
+        ),
+        CheckConstraint(
+            "prompt_tokens >= 0 AND completion_tokens >= 0 AND cost_micro >= 0",
+            name="counts_non_negative",
+        ),
+        CheckConstraint("char_length(purpose) BETWEEN 1 AND 32", name="purpose_length"),
+        CheckConstraint("char_length(model) BETWEEN 1 AND 256", name="model_length"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    day: Mapped[date]
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("app_user.id", ondelete="CASCADE"))
+    purpose: Mapped[str] = mapped_column(String(32))
+    model: Mapped[str] = mapped_column(String(256))
+    calls: Mapped[int] = mapped_column(BigInteger, server_default=text("0"))
+    unpriced_calls: Mapped[int] = mapped_column(BigInteger, server_default=text("0"))
+    prompt_tokens: Mapped[int] = mapped_column(BigInteger, server_default=text("0"))
+    completion_tokens: Mapped[int] = mapped_column(BigInteger, server_default=text("0"))
+    cost_micro: Mapped[int] = mapped_column(BigInteger, server_default=text("0"))

@@ -13,6 +13,7 @@ data (10.1, P3) also needs a recent login (step-up), like revoking consent.
 from __future__ import annotations
 
 from datetime import datetime  # noqa: TC003 - pydantic resolves annotations at runtime
+from decimal import Decimal  # noqa: TC003 - pydantic resolves annotations at runtime
 from typing import TYPE_CHECKING, Annotated, Any
 from uuid import UUID  # noqa: TC003 - pydantic resolves annotations at runtime
 
@@ -56,6 +57,7 @@ from spoldzielnia_ai.llm.endpoints import (
 from spoldzielnia_ai.llm.playground import MAX_PROMPT, PRESETS, compare, prompt_digest
 from spoldzielnia_ai.llm.probes import deployment_for, list_models, probe_model, single_gateway
 from spoldzielnia_ai.llm.snapshot import ConfigSnapshot
+from spoldzielnia_ai.llm.usage import UsageRecorder, micro_to_price
 from spoldzielnia_ai.vector.reembed import (
     GenerationError,
     GenerationManager,
@@ -181,6 +183,9 @@ class ModelOut(BaseModel):
     last_probe_at: datetime | None
     last_probe_ok: bool | None
     last_probe_report: dict[str, Any] | None
+    # Per million tokens, in the usage currency (15.3); both null when unpriced.
+    price_in_per_million: Decimal | None = None
+    price_out_per_million: Decimal | None = None
 
 
 class RouteOut(BaseModel):
@@ -317,6 +322,12 @@ def _model_out(model: LlmModel, active: set[UUID]) -> ModelOut:
         last_probe_at=model.last_probe_at,
         last_probe_ok=model.last_probe_ok,
         last_probe_report=dict(model.last_probe_report) if model.last_probe_report else None,
+        price_in_per_million=None
+        if model.price_in_micro is None
+        else micro_to_price(model.price_in_micro),
+        price_out_per_million=None
+        if model.price_out_micro is None
+        else micro_to_price(model.price_out_micro),
     )
 
 
@@ -577,6 +588,7 @@ async def probe(
         deployment,
         settings.llm,
         transport=_transport(request),
+        usage=UsageRecorder(request.app.state.session_factory),  # probes cost compute too (15.2)
     )
     updated = await service.record_probe(principal.id, model.id, bool(report.get("ok")), report)
     _, active = await _active_providers(service)
@@ -754,7 +766,16 @@ async def playground(
             timeout_seconds=provider.timeout_seconds,
         )
         runs.append(
-            (model.id, single_gateway(deployment, settings.llm, _transport(request)), deployment)
+            (
+                model.id,
+                single_gateway(
+                    deployment,
+                    settings.llm,
+                    _transport(request),
+                    usage=UsageRecorder(state.session_factory),
+                ),
+                deployment,
+            )
         )
     results = await compare([(g, d) for _, g, d in runs], prompt, preset)
     async with state.session_factory() as session, session.begin():

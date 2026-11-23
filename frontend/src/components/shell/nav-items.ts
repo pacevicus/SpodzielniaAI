@@ -2,7 +2,9 @@ import {
   Bot,
   BookOpen,
   ClipboardCheck,
+  Coins,
   Database,
+  Gauge,
   FilePen,
   HandHeart,
   Images,
@@ -43,6 +45,7 @@ export const SECTIONS: NavSection[] = [
       { href: "/notebook", key: "notebook", icon: NotebookPen },
       { href: "/me/drafts", key: "drafts", icon: FilePen },
       { href: "/me/contributions", key: "contributions", icon: HandHeart },
+      { href: "/me/usage", key: "usage", icon: Gauge },
     ],
   },
   {
@@ -71,6 +74,7 @@ export const SECTIONS: NavSection[] = [
       { href: "/admin/users", key: "users", icon: Users },
       { href: "/admin/atlas", key: "adminAtlas", icon: Database },
       { href: "/admin/branding", key: "branding", icon: Palette },
+      { href: "/admin/usage", key: "adminUsage", icon: Coins },
     ],
   },
 ];

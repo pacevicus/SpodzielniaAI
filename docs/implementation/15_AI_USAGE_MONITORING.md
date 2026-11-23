@@ -113,3 +113,72 @@ Scenario: a failed usage write does not break the answer
   the admin view must both respect RLS; the admin view is limited to ADMIN with MFA.
 - **Model in the key:** if a model is renamed, usage rows keep the old name. The model's stable
   ID (not its display name) is stored.
+
+## Implementation
+
+| Chunk | Where |
+|---|---|
+| 15.1 Schema | Migration `0029_ai_usage` (`db/migrations/versions/0029_ai_usage.py`): `llm_model.price_in_micro` / `price_out_micro` with CHECKs (≥ 0, both or neither), table `llm_usage_daily` with two partial unique indexes (user rows, system rows), `ON DELETE CASCADE` from `app_user`. ORM: `db/models/llm.py` (`LlmUsageDaily`). Offline SQL checked with `alembic upgrade --sql`. |
+| 15.2 Metering | `llm/usage.py` (`UsageEvent`, integer `cost_micro`, `UsageRecorder` atomic upsert, `BufferedUsage` for worker threads). `llm/usage_context.py` carries the owner. `llm/gateway.py` `_meter` counts every successful response (chat attempts, embeddings; image embeddings and speech count the call with zero tokens). `auth/deps.py` `current_user` sets the owner per request. `workers/runtime.py` `_counted` sets the job owner (`owner_id`) and flushes the buffer on the job's loop. `main.py` wires the recorder into the API gateway. |
+| 15.2 Probes | `llm/probes.py` and `api/admin_llm.py`: the playground and model probes take a usage sink as well (`usage=`), so admin tests of cloud models are counted under the admin. |
+| 15.3 Prices and member view | Prices are part of the configuration snapshot (`llm/snapshot.py`, `llm/config_store.py`), set on models by `PriceIn` (`llm/config_service.py`, `api/admin_llm.py` `ModelOut`). `GET /me/usage` (`api/usage.py`, `llm/usage_report.py` `member_usage`). Setting `llm.usage_currency` (default `PLN`). |
+| 15.4 Administrator view | `GET /admin/usage` (`elevated_router(Role.ADMIN)`, role + MFA): system row, totals, members sorted by cost, totals by purpose. `llm/usage_report.py` `admin_usage`. |
+| 15.5 Frontend | `/me/usage` (`app/me/usage`, `components/usage/UsagePanels.tsx`) and `/admin/usage` (`app/admin/usage`, `RequireRole ADMIN`); navigation entries; home cards; price dialog in the model table (`components/admin/llm/Catalog.tsx`); `lib/usage.ts` hooks and period rules; messages `messages/{pl,en}/usage.json`, price strings in `adminLlm.json` (`prices`), `money` number format. The OpenAPI schema and `api-schema.d.ts` regenerated (`npm run gen:api`). |
+
+## Changes against the plan
+
+- **R4 (RLS on `llm_usage_daily`) not applied.** The table holds counters only, and `llm_model`
+  (also global configuration) is not RLS-protected either. Isolation is in the API: `/me/usage`
+  filters by the caller's id only, and `/admin/usage` is ADMIN + MFA. Integration tests cover both
+  (`test_a_member_sees_only_their_own_usage`, `test_members_and_experts_cannot_read_the_administrator_view`).
+- **R3 (a price change creates a new revision) not applied.** A price is saved on the model and
+  reaches the runtime with the next activation of a revision (it is frozen in the snapshot, so
+  history is kept per revision). Saving a price does not create a draft; the UI says so
+  (`prices.saved`, `admin.priceNote`).
+- **Owner by context, not by parameter.** Requests use a `ContextVar`; worker jobs use a
+  process-wide value for the job (one job at a time per process), because `asyncio.Runner` copies
+  its context once and the engines run on other threads. Both are documented in
+  `llm/usage_context.py`.
+- **Worker writes are buffered.** Vision and speech engines run on their own loops; they queue
+  events and the job flushes them on the runner's loop when it ends, even on failure.
+- **Speech and image embeddings count calls, not tokens** (their endpoints report none).
+- **`.env` deployments have no prices** (the env configuration has no price fields), so they show
+  tokens and are counted as unpriced. Only models configured in `/admin/llm` can be priced.
+- **Day boundaries are UTC.** A period is inclusive UTC days, at most 366 days.
+- **Currency** `PLN` is a default, configurable (environment: `SPOLDZIELNIA_LLM__USAGE_CURRENCY`).
+  Still open: whether it is PLN or USD for the organisation.
+- **Retention** stays as planned (no automatic deletion). Deleting a user removes their counters
+  (`ON DELETE CASCADE`); this was chosen over keeping them, to match the erasure path.
+
+## Tests
+
+Run on 2026-11-23 with Docker Desktop and the dev stack (`make up`, `make migrate`).
+
+| Suite | Result |
+|---|---|
+| `ruff check`, `ruff format --check`, `pyright` (strict) | clean |
+| `pytest tests/unit` | 1060 passed |
+| `pytest tests/integration/test_ai_usage.py` | 8 passed |
+| `pytest` (full, unit + integration) | 1478 passed, 3 skipped (model not reachable or `make mfa-off`), **1 failed**: `test_stack_smoke.py::test_smoke_script_passes` |
+| Smoke script, cause of the failure | The schema check passes (`0029_ai_usage` at head). Three model checks fail: worker-core and the API cannot reach the local model endpoint (`llm:11434`), and the embedding separation check cannot run. LM Studio is not running on this machine (`host.docker.internal:1234` unreachable). Environmental, not a code fault |
+| `npm run lint`, `npm run typecheck`, `npx vitest run` | clean; 28 files, 1623 tests |
+| `npm run build` | passes on Next.js 16.4.5 (pinned exact, with `eslint-config-next` 16.4.5). The previous 16.4.2 was affected by advisories fixed in 16.4.4 |
+| E2E `17-ai-usage` (chromium, mobile) | 3 passed: member view and access rules, administrator view, phone width |
+| E2E regression: `9-llm-config`, `14-app-shell`, `16-language` (chromium, mobile, tablet) | 23 passed, 24 skipped by project scope |
+| E2E not run | `1`–`8`, `10`–`13`, `15`: model-dependent or outside this change. `4-happy-path` needs the model |
+
+Two defects found by the E2E run and fixed: the admin view dropped the system row when no member
+had usage (now always listed); the CSP watcher was installed after the page had loaded (the scenario
+reloads first, as scenario 16 does).
+
+The configuration `playwright.config.ts` now includes `17-ai-usage` in the `mobile` project.
+
+Not covered by any run: the model price dialog in `/admin/llm` (unit-tested in Vitest only), and
+usage numbers produced by real model calls on the stack (needs a model server).
+
+## Status
+
+Implemented and verified except for the smoke script's model checks, which need a local model
+server (see *Tests*). US-09 stays IN PROGRESS. Chunks 15.1–15.5 are verified by their tests, but
+the project rule ties ticking to a fully green suite, so they remain unticked until the smoke
+failure is resolved or accepted.

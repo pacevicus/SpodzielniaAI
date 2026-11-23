@@ -72,6 +72,7 @@ def test_tables_registered() -> None:
         "branding",
         "model_wait",
         "index_generation",
+        "llm_usage_daily",
     }
 
 
@@ -198,6 +199,7 @@ def test_migrations_form_a_single_linear_history() -> None:
         "0026_provider_removal",
         "0027_branding",
         "0028_user_locale",
+        "0029_ai_usage",
     ]
 
 

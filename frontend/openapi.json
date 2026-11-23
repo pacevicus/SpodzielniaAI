@@ -112,6 +112,55 @@
         "title": "AdminBrandingOut",
         "type": "object"
       },
+      "AdminUsageOut": {
+        "properties": {
+          "by_purpose": {
+            "items": {
+              "$ref": "#/components/schemas/PurposeUsageOut"
+            },
+            "title": "By Purpose",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/MemberUsageOut"
+            },
+            "title": "Members",
+            "type": "array"
+          },
+          "period_from": {
+            "format": "date",
+            "title": "Period From",
+            "type": "string"
+          },
+          "period_to": {
+            "format": "date",
+            "title": "Period To",
+            "type": "string"
+          },
+          "system": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          },
+          "total": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          }
+        },
+        "required": [
+          "period_from",
+          "period_to",
+          "currency",
+          "system",
+          "total",
+          "members",
+          "by_purpose"
+        ],
+        "title": "AdminUsageOut",
+        "type": "object"
+      },
       "AnnotationSource": {
         "description": "Who drew a mark: the member, or a recognition suggestion they accepted (9.9).",
         "enum": [
@@ -2822,6 +2871,36 @@
         "title": "MeResponse",
         "type": "object"
       },
+      "MemberUsageOut": {
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          },
+          "user_id": {
+            "format": "uuid",
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "display_name",
+          "totals"
+        ],
+        "title": "MemberUsageOut",
+        "type": "object"
+      },
       "MergeIn": {
         "properties": {
           "into_id": {
@@ -2884,6 +2963,16 @@
               }
             ],
             "title": "Notes"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "provider_id": {
             "format": "uuid",
@@ -3002,6 +3091,28 @@
             ],
             "title": "Notes"
           },
+          "price_in_per_million": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price In Per Million"
+          },
+          "price_out_per_million": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Out Per Million"
+          },
           "provider_id": {
             "format": "uuid",
             "title": "Provider Id",
@@ -3076,6 +3187,16 @@
               }
             ],
             "title": "Notes"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "temperature": {
             "anyOf": [
@@ -3182,6 +3303,43 @@
           "verified_at"
         ],
         "title": "MyPhotoOut",
+        "type": "object"
+      },
+      "MyUsageOut": {
+        "properties": {
+          "by_purpose": {
+            "items": {
+              "$ref": "#/components/schemas/PurposeUsageOut"
+            },
+            "title": "By Purpose",
+            "type": "array"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "period_from": {
+            "format": "date",
+            "title": "Period From",
+            "type": "string"
+          },
+          "period_to": {
+            "format": "date",
+            "title": "Period To",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          }
+        },
+        "required": [
+          "period_from",
+          "period_to",
+          "currency",
+          "totals",
+          "by_purpose"
+        ],
+        "title": "MyUsageOut",
         "type": "object"
       },
       "NoteAnswer": {
@@ -4050,6 +4208,43 @@
         "title": "PreviewOut",
         "type": "object"
       },
+      "PriceIn": {
+        "description": "What one million prompt and completion tokens cost, in the usage currency (15.3).\nBoth prices or none; at most six decimals (micro-units in the database).",
+        "properties": {
+          "price_in_per_million": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price In Per Million"
+          },
+          "price_out_per_million": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Price Out Per Million"
+          }
+        },
+        "required": [
+          "price_in_per_million",
+          "price_out_per_million"
+        ],
+        "title": "PriceIn",
+        "type": "object"
+      },
       "ProbeOut": {
         "properties": {
           "model": {
@@ -4685,6 +4880,23 @@
           "private_data"
         ],
         "title": "PurposeOut",
+        "type": "object"
+      },
+      "PurposeUsageOut": {
+        "properties": {
+          "purpose": {
+            "title": "Purpose",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/UsageTotalsOut"
+          }
+        },
+        "required": [
+          "purpose",
+          "totals"
+        ],
+        "title": "PurposeUsageOut",
         "type": "object"
       },
       "QueueItemOut": {
@@ -6161,6 +6373,49 @@
           "is_locked"
         ],
         "title": "UnlockOut",
+        "type": "object"
+      },
+      "UsageTotalsOut": {
+        "properties": {
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "completion_tokens": {
+            "title": "Completion Tokens",
+            "type": "integer"
+          },
+          "cost": {
+            "title": "Cost",
+            "type": "string"
+          },
+          "cost_micro": {
+            "title": "Cost Micro",
+            "type": "integer"
+          },
+          "prompt_tokens": {
+            "title": "Prompt Tokens",
+            "type": "integer"
+          },
+          "total_tokens": {
+            "title": "Total Tokens",
+            "type": "integer"
+          },
+          "unpriced_calls": {
+            "title": "Unpriced Calls",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calls",
+          "unpriced_calls",
+          "prompt_tokens",
+          "completion_tokens",
+          "total_tokens",
+          "cost_micro",
+          "cost"
+        ],
+        "title": "UsageTotalsOut",
         "type": "object"
       },
       "UserCoverageOut": {
@@ -8562,6 +8817,73 @@
         "summary": "Get Status",
         "tags": [
           "admin-llm"
+        ]
+      }
+    },
+    "/admin/usage": {
+      "get": {
+        "operationId": "all_usage_admin_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminUsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "All Usage",
+        "tags": [
+          "admin-usage"
         ]
       }
     },
@@ -11051,6 +11373,73 @@
           }
         },
         "summary": "Set Locale",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/usage": {
+      "get": {
+        "operationId": "my_usage_me_usage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyUsageOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "My Usage",
         "tags": [
           "me"
         ]

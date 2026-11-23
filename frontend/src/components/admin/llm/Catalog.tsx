@@ -25,6 +25,7 @@ import {
   useProviderDisabled,
   useTestProvider,
   useUnclearProvider,
+  useUpdateModel,
   useUpdateProvider,
   type Capability,
   type Connection,
@@ -587,6 +588,7 @@ export function ModelsPanel({ status, providers, models }: { status: LlmStatus; 
   const probe = useProbe();
   const disable = useModelDisabled();
   const toast = useToast();
+  const [pricing, setPricing] = useState<LlmModel | null>(null);
   const byProvider = new Map(providers.map((p) => [p.id, p]));
 
   async function runProbe(model: LlmModel) {
@@ -615,6 +617,7 @@ export function ModelsPanel({ status, providers, models }: { status: LlmStatus; 
             <Th>{t("models.model")}</Th>
             <Th>{t("models.type")}</Th>
             <Th>{t("models.parameters")}</Th>
+            <Th>{t("prices.header")}</Th>
             <Th>{t("models.lastTest")}</Th>
             <Th>{t("providers.actions")}</Th>
           </Tr>
@@ -646,6 +649,11 @@ export function ModelsPanel({ status, providers, models }: { status: LlmStatus; 
                           tokens: m.max_tokens ?? t("models.default"),
                         })}
                 </Td>
+                <Td label={t("prices.header")} className="text-xs">
+                  {m.price_in_per_million != null && m.price_out_per_million != null
+                    ? `${m.price_in_per_million} / ${m.price_out_per_million}`
+                    : t("prices.none")}
+                </Td>
                 <Td label={t("models.lastTest")}>
                   {m.last_probe_at ? (
                     <>
@@ -669,6 +677,9 @@ export function ModelsPanel({ status, providers, models }: { status: LlmStatus; 
                     >
                       {t("models.test")}
                     </Button>
+                    <Button variant="ghost" onClick={() => setPricing(m)}>
+                      {t("prices.edit")}
+                    </Button>
                     <Button variant="ghost" disabled={m.in_active && !m.disabled} onClick={() => void toggle(m)}>
                       {m.disabled ? t("providers.enable") : t("providers.disable")}
                     </Button>
@@ -679,7 +690,80 @@ export function ModelsPanel({ status, providers, models }: { status: LlmStatus; 
           })}
         </TBody>
       </DataTable>
+      <ModelPriceDialog model={pricing} onClose={() => setPricing(null)} />
     </div>
+  );
+}
+
+/** A price per million tokens: plain decimal, at most six places (the database stores micro-units). */
+const PRICE_PATTERN = /^\d+(\.\d{1,6})?$/;
+
+function ModelPriceDialog({ model, onClose }: { model: LlmModel | null; onClose: () => void }) {
+  const t = useTranslations("adminLlm");
+  return (
+    <Dialog open={model !== null} onClose={onClose} title={t("prices.title")}>
+      {model && <PriceForm key={model.id} model={model} onDone={onClose} />}
+    </Dialog>
+  );
+}
+
+function PriceForm({ model, onDone }: { model: LlmModel; onDone: () => void }) {
+  const t = useTranslations("adminLlm");
+  const update = useUpdateModel();
+  const toast = useToast();
+  const [inPrice, setInPrice] = useState(model.price_in_per_million ?? "");
+  const [outPrice, setOutPrice] = useState(model.price_out_per_million ?? "");
+  const [invalid, setInvalid] = useState(false);
+
+  async function save(price: { price_in_per_million: string; price_out_per_million: string } | null) {
+    try {
+      await update.mutateAsync({ id: model.id, patch: { price } });
+      toast(t("prices.saved"), "ok");
+      onDone();
+    } catch (error) {
+      toast(t(`errors.${llmErrorKey(error)}`), "error");
+    }
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const inValue = inPrice.trim();
+    const outValue = outPrice.trim();
+    if (!PRICE_PATTERN.test(inValue) || !PRICE_PATTERN.test(outValue)) {
+      setInvalid(true);
+      return;
+    }
+    setInvalid(false);
+    void save({ price_in_per_million: inValue, price_out_per_million: outValue });
+  }
+
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-4">
+      <p className="text-sm text-text-muted">{t("prices.hint")}</p>
+      <label className="flex flex-col gap-1 text-sm">
+        {t("prices.inLabel")}
+        <input className={INPUT} inputMode="decimal" value={inPrice} onChange={(e) => setInPrice(e.target.value)} />
+      </label>
+      <label className="flex flex-col gap-1 text-sm">
+        {t("prices.outLabel")}
+        <input className={INPUT} inputMode="decimal" value={outPrice} onChange={(e) => setOutPrice(e.target.value)} />
+      </label>
+      {invalid && (
+        <p role="alert" className="text-sm text-danger">
+          {t("prices.invalid")}
+        </p>
+      )}
+      <div className="flex flex-wrap justify-end gap-2">
+        {model.price_in_per_million != null && (
+          <Button variant="ghost" busy={update.isPending} onClick={() => void save(null)}>
+            {t("prices.clear")}
+          </Button>
+        )}
+        <Button type="submit" busy={update.isPending}>
+          {t("prices.save")}
+        </Button>
+      </div>
+    </form>
   );
 }
 

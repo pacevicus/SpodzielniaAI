@@ -51,12 +51,15 @@ from pydantic import BaseModel, ValidationError
 from spoldzielnia_ai.core.logging import get_logger
 from spoldzielnia_ai.core.metrics import LLM_ERRORS, LLM_REQUEST_SECONDS, LLM_ROUTE_REFUSED
 from spoldzielnia_ai.llm.endpoints import may_receive_private_data
+from spoldzielnia_ai.llm.usage import UsageEvent
+from spoldzielnia_ai.llm.usage_context import current_usage_owner
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
     from spoldzielnia_ai.core.settings import LlmSettings
     from spoldzielnia_ai.llm.transcription import Transcription
+    from spoldzielnia_ai.llm.usage import UsageSink
 
 # Before LiteLLM is imported anywhere: never download the model price map at runtime.
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
@@ -216,6 +219,9 @@ class Deployment:
     structured_output: Literal["json_schema", "prompt"] | None = None
     timeout_seconds: float | None = None
     provider: str = "openai"
+    # Price per million tokens in micro-units (15.1); ``None``: unpriced, tokens only.
+    price_in_micro: int | None = None
+    price_out_micro: int | None = None
 
     @property
     def cleared(self) -> bool:
@@ -492,10 +498,12 @@ class LiteLLMGateway:
         transport: ChatTransport | None = None,
         *,
         source: ConfigSource | None = None,
+        usage: UsageSink | None = None,
     ) -> None:
         self._settings = settings
         self._config = env_config(settings)
         self._source: ConfigSource = source or StaticConfig(self._config)
+        self._usage = usage  # 15.2: every successful response is counted, when wired
         self._fixed_transport = transport
         self._transport: ChatTransport | None = transport
         self._transport_config: ResolvedLlmConfig | None = None
@@ -555,6 +563,25 @@ class LiteLLMGateway:
         if deployment is None:
             raise ModelNotConfigured(purpose)
         return deployment
+
+    async def _meter(
+        self, purpose: LLMPurpose, deployment: Deployment, usage: Mapping[str, int]
+    ) -> None:
+        """Count one successful response for the current owner (15.2). Endpoints that report
+        no tokens (speech, image embeddings) count the call with zero tokens."""
+        if self._usage is None:
+            return
+        await self._usage.record(
+            UsageEvent(
+                user_id=current_usage_owner(),
+                purpose=purpose.value,
+                model=deployment.name,
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0),
+                price_in_micro=deployment.price_in_micro,
+                price_out_micro=deployment.price_out_micro,
+            )
+        )
 
     def _pinned(self, deployment: Deployment) -> ChatTransport:
         """A transport for a deployment outside the current configuration (an index
@@ -636,6 +663,7 @@ class LiteLLMGateway:
             )
             content = str(response.choices[0].message.content or "")
             usage = _usage(response)
+            await self._meter(purpose, deployment, usage)
             if response_model is None:
                 return LLMResult(content, None, deployment.name, deployment.model, attempt, usage)
             try:
@@ -692,6 +720,7 @@ class LiteLLMGateway:
         LLM_REQUEST_SECONDS.labels(deployment=deployment.name, purpose=purpose.value).observe(
             time.monotonic() - started
         )
+        await self._meter(purpose, deployment, _usage(response))
         return [list(map(float, item["embedding"])) for item in response.data]
 
     async def embed_images(
@@ -728,6 +757,7 @@ class LiteLLMGateway:
         LLM_REQUEST_SECONDS.labels(deployment=deployment.name, purpose=purpose.value).observe(
             time.monotonic() - started
         )
+        await self._meter(purpose, deployment, {})  # the endpoint reports no tokens
         return vectors
 
     async def transcribe(
@@ -766,6 +796,7 @@ class LiteLLMGateway:
         LLM_REQUEST_SECONDS.labels(deployment=deployment.name, purpose=purpose.value).observe(
             time.monotonic() - started
         )
+        await self._meter(purpose, deployment, {})  # the endpoint reports no tokens
         return result
 
 

@@ -17,5 +17,7 @@
   "security": "Security",
   "users": "Users",
   "adminAtlas": "Atlas",
-  "article": "Article"
+  "article": "Article",
+  "usage": "AI usage",
+  "adminUsage": "AI usage in the cooperative"
 }

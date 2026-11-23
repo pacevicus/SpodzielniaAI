@@ -20,7 +20,9 @@
     "users": "Użytkownicy",
     "adminAtlas": "Atlas (admin)",
     "branding": "Wygląd",
-    "privacy": "Twoje dane"
+    "privacy": "Twoje dane",
+    "usage": "Zużycie AI",
+    "adminUsage": "Zużycie AI (admin)"
   },
   "mainNav": "Główna",
   "menu": "Menu",
