@@ -284,3 +284,14 @@ Rejestr historyjek dodanych poza Etapami 1–6: [docs/USER_STORIES_LOG.md](docs/
 - [x] 14.4 Recenzje i konsole administratora w katalogu; kontrola braku tekstów na sztywno (diakrytyki + ESLint `no-literal-string`)
 - [x] 14.5 Odpowiedzi czatu po angielsku bez osłabienia ochrony przed destylacją (angielskie sloty znaku wodnego, wielojęzyczna kontrola dosłowności przez embeddingi, bez modelu embeddingów odpowiedź po polsku, angielskie frazy ekstrakcji i injection)
 - [x] 14.6 E2E (scenariusz 16), przegląd bezpieczeństwa i dokumentacja
+
+---
+### Etap 15: Monitoring zużycia AI — tokeny i szacunkowy koszt (US-09)
+*Dokumentacja: [docs/implementation/15_AI_USAGE_MONITORING.md](docs/implementation/15_AI_USAGE_MONITORING.md)*
+- [ ] 15.1 Migracja `llm_usage_daily` (RLS, CHECK, unikalny klucz), ceny modelu w konfiguracji (migracja + rewizja), wpisy w `test_db_models.py`
+- [ ] 15.2 Serwis zużycia: atomowy upsert liczników po każdym wywołaniu w bramce LLM; test: liczenie, wiersz „system”, model bez ceny, błąd zapisu nie przerywa odpowiedzi
+- [ ] 15.3 Koszt w mikrojednostkach całkowitych i endpoint `GET /me/usage` z testami RLS (użytkownik nie widzi cudzych danych)
+- [ ] 15.4 Endpoint administratora `GET /admin/usage` (per użytkownik, wiersz systemowy, sumy, podział na cel i model); test integracyjny
+- [ ] 15.5 Frontend: „Zużycie AI” w „Twoje dane” i w konsoli administratora; stany puste/bez ceny/błędu; teksty pl+en; Vitest; scenariusz E2E
+- [ ] 15.6 Przegląd bezpieczeństwa, sekcje etapu, US-09 DONE z hashami commitów
+

@@ -23,6 +23,7 @@ committed, add the commit hash to the story's *Delivery* list.
 | [US-06](#us-06) | The UI works like Open Notebook — menu on the left, workspace on the right — on desktops and phones | DONE | [12_APP_SHELL_RESPONSIVE.md](implementation/12_APP_SHELL_RESPONSIVE.md) · Etap 12 | 2026-10-26 |
 | [US-07](#us-07) | Administrator brands the UI: organisation name, logo (and favicon) and colours | DONE | [13_BRANDING.md](implementation/13_BRANDING.md) · Etap 13 | 2026-10-26 |
 | [US-08](#us-08) | User selects the UI language (Polish or English); the UI reloads in the chosen language | DONE | [14_UI_LANGUAGE.md](implementation/14_UI_LANGUAGE.md) · Etap 14 | 2026-10-26 |
+| [US-09](#us-09) | Administrator and user see AI usage (tokens and estimated cost) per user and for the system, as the basis for a future usage fee | PLANNED | [15_AI_USAGE_MONITORING.md](implementation/15_AI_USAGE_MONITORING.md) · Etap 15 | 2026-11-23 |
 
 ---
 
@@ -303,3 +304,19 @@ is in the chosen language.
   4. No user-visible string is hard-coded in the frontend; the two catalogues have the same keys
      and placeholders; existing E2E scenarios pass in Polish.
 - **Delivery:** `14bef00` plan · 14.1–14.6 locale on the account and the `lang` cookie (migration 0028), server texts in both languages, English answers with a cross-language verbatim check and an English watermark, `next-intl` catalogues for every screen, the language switch, E2E scenario 16 (this commit).
+
+---
+
+## US-09
+
+**Story:** As an administrator and as a user I want to see how much LLM compute was used, by
+each user and by the whole system, so that a usage fee can be introduced later.
+
+- **Source:** product owner request, 2026-11-23.
+- **Status:** PLANNED 2026-11-23 (refined, not yet implemented).
+- **Plan:** [docs/implementation/15_AI_USAGE_MONITORING.md](implementation/15_AI_USAGE_MONITORING.md)
+- **Refinement decisions (accepted 2026-11-23):** tokens plus estimated cost (price per 1M
+  tokens per model in `/admin/llm`); users see their own usage, the ADMIN panel (with MFA) sees
+  all users and the system total; every LLM call counts, grouped by purpose; billing is out of
+  scope; counters only, no content.
+- **Delivery:** —
