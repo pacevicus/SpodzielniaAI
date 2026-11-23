@@ -214,6 +214,28 @@ P1–P9 of `docs/implementation/10_MODEL_PROVIDERS_API.md` and their proof:
   object deleted in between (a revoke purge) is missing from that backup, and its row points at
   nothing. Run backups at a quiet hour; the next night's backup is consistent again.
 
+## Stage 15 additions (AI usage monitoring, US-09)
+
+| Control | Proof |
+|---|---|
+| R1 Counters only: a usage event has no field for content, so no prompt, answer, audio or image can reach the counters. The table stores day, owner, purpose, model code, call and token counts, and micro-unit cost | `llm/usage.py` `UsageEvent` (type), `test_llm_usage.py::test_a_call_is_counted_for_its_owner_with_the_reported_tokens` |
+| A member sees only their own figures: `GET /me/usage` filters by the authenticated id in the query | `test_ai_usage.py::test_a_member_sees_only_their_own_usage` (integration, not run here) |
+| The administrator view needs ADMIN and MFA (`elevated_router`), and a member or an expert is refused | `test_ai_usage.py::test_members_and_experts_cannot_read_the_administrator_view` (integration, not run here) |
+| Prices: both or neither, non-negative, at most 1 000 000 per million tokens, at most six decimals. Enforced by database CHECKs (migration 0029, model) and by `PriceIn` | migration `0029_ai_usage` CHECKs; `test_llm_usage.py::test_price_rejects_invalid_values`; `test_ai_usage.py::test_prices_are_set_and_cleared_through_the_model_api` (integration) |
+| Price changes are audited through the existing model-change event (the event records that a price changed, not its value) | `llm/config_service.py` `update_model` (`changes["priced"]`) |
+| Failure to write usage never fails the answer or the job, and the log carries the error type only | `test_llm_usage.py::test_a_failed_usage_write_never_fails_the_call`; `llm/usage.py` `UsageRecorder.record` |
+| A call that fails is not counted, so the counters are never inflated by errors | `test_llm_usage.py::test_a_failed_call_is_not_counted` |
+| Owners cannot leak between requests: the request owner is per asyncio task; a worker job's owner is set and restored around the job | `test_llm_usage.py::test_a_request_owner_does_not_leak_into_another_request`, `::test_a_job_owner_is_restored_after_the_job` |
+| Read-only endpoints: no CSRF needed, no audit entry; the period is bounded (at most 366 days) and validated with machine codes | `test_llm_usage.py::test_period_*`; `test_ai_usage.py::test_a_bad_period_is_refused_with_a_code` (integration) |
+| Deleting a user deletes their counters (`ON DELETE CASCADE`), in line with the erasure path | `test_ai_usage.py::test_the_counters_are_deleted_with_the_user` (integration) |
+
+- **Accepted:** usage is written after the answer, so a database outage during a call undercounts
+  it (R6 in the plan). A fee stage needs a reconciliation step before money is charged.
+- **Accepted:** the cost is an estimate from the configured price, not the provider's invoice.
+  The UI says "szacunkowy" / "estimate".
+- **Accepted:** the counters are not RLS-protected (see *Changes against the plan* in the stage
+  file). Their isolation is the API filter and the ADMIN + MFA gate.
+
 ## Accepted risks
 
 Every entry is the reason a scanner is told to stay quiet. Re-check each entry when its trigger changes.

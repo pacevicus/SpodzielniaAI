@@ -1,11 +1,15 @@
-import type { HTMLAttributes, ReactNode, TdHTMLAttributes, ThHTMLAttributes } from "react";
+"use client";
+
+import { useEffect, useRef, useState, type HTMLAttributes, type ReactNode, type TdHTMLAttributes, type ThHTMLAttributes } from "react";
 
 import { cn } from "./cn";
 
 /**
  * A table on md+, a list of cards below (12.2). One DOM for both: below md the table parts
  * become blocks, the header row is visually hidden and each `Td` shows its `label` above the
- * value. The explicit roles keep the table semantics that `display: block` would drop.
+ * value. The explicit roles keep the table semantics that `display: block` would drop. On md+ the
+ * wrapper scrolls sideways; while the table overflows it, the wrapper is a focusable, named region
+ * so keyboard users can scroll it (no extra tab stop when nothing scrolls, e.g. the phone cards).
  */
 export function DataTable({
   label,
@@ -20,8 +24,26 @@ export function DataTable({
   className?: string;
   children: ReactNode;
 }) {
+  const name = label ?? caption;
+  const wrapper = useRef<HTMLDivElement>(null);
+  const [scrolls, setScrolls] = useState(false);
+  useEffect(() => {
+    const el = wrapper.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const check = () => setScrolls(el.scrollWidth > el.clientWidth);
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
   return (
-    <div className={cn("md:overflow-x-auto", className)}>
+    <div
+      ref={wrapper}
+      role={scrolls && name ? "region" : undefined}
+      aria-label={scrolls ? name : undefined}
+      tabIndex={scrolls ? 0 : undefined}
+      className={cn("md:overflow-x-auto", className)}
+    >
       <table role="table" aria-label={label} className="w-full text-left text-sm max-md:block">
         {caption && <caption className="sr-only">{caption}</caption>}
         {children}

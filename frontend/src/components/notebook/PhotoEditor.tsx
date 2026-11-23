@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
@@ -10,6 +11,7 @@ import { RecognitionPanel, suggestionKey } from "@/components/notebook/Recogniti
 import { LabelCombobox } from "@/components/atlas/LabelCombobox";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { ConfirmDialog } from "@/components/ui/Dialog";
 import { cn } from "@/components/ui/cn";
 import { useToast } from "@/components/ui/Toast";
 import { useDomains } from "@/lib/atlas";
@@ -47,12 +49,16 @@ function Editor({ noteId, attachmentId, photo, onReload }: { noteId: string; att
   const t = useTranslations("notebook.photo");
   const domains = useDomains();
   const save = useSavePhoto(noteId, attachmentId);
+  const router = useRouter();
   const toast = useToast();
   const [domainId, setDomainId] = useState<string | null>(photo.domain_id);
   const [caption, setCaption] = useState(photo.caption ?? "");
   const [marks, setMarks] = useState<Mark[]>(() => toMarks(photo.regions));
   const [selected, setSelected] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  // `undefined`: no question open; `null` is a real choice (no domain).
+  const [pendingDomain, setPendingDomain] = useState<string | null | undefined>(undefined);
   const [error, setError] = useState<PhotoErrorKey | null>(null);
   const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
   const recognitions = useRecognitions(noteId, attachmentId);
@@ -90,6 +96,12 @@ function Editor({ noteId, attachmentId, photo, onReload }: { noteId: string; att
     setDirty(true);
   }
 
+  function changeDomain(next: string | null) {
+    setDomainId(next);
+    setDirty(true);
+    if (next !== domainId) change(marks.map((m) => ({ ...m, label: null })));
+  }
+
   function edit(key: string, patch: Partial<Mark>) {
     change(marks.map((m) => (m.key === key ? { ...m, ...patch } : m)));
   }
@@ -117,7 +129,9 @@ function Editor({ noteId, attachmentId, photo, onReload }: { noteId: string; att
             href={`/notebook/${noteId}`}
             className="text-sm text-text-muted hover:text-text"
             onClick={(e) => {
-              if (dirty && !window.confirm(t("confirmLeave"))) e.preventDefault();
+              if (!dirty) return;
+              e.preventDefault();
+              setConfirmLeave(true);
             }}
           >
             {t("back")}
@@ -138,6 +152,28 @@ function Editor({ noteId, attachmentId, photo, onReload }: { noteId: string; att
           ghosts={ghosts}
         />
         {!domainId && <p className="text-sm text-warn">{t("chooseDomainFirst")}</p>}
+        <ConfirmDialog
+          open={confirmLeave}
+          title={t("confirmLeave")}
+          confirmLabel={t("leave")}
+          danger
+          onCancel={() => setConfirmLeave(false)}
+          onConfirm={() => {
+            setConfirmLeave(false);
+            setDirty(false); // no beforeunload prompt on the way out
+            router.push(`/notebook/${noteId}`);
+          }}
+        />
+        <ConfirmDialog
+          open={pendingDomain !== undefined}
+          title={t("confirmDomain")}
+          confirmLabel={t("changeDomain")}
+          onCancel={() => setPendingDomain(undefined)}
+          onConfirm={() => {
+            if (pendingDomain !== undefined) changeDomain(pendingDomain);
+            setPendingDomain(undefined);
+          }}
+        />
       </section>
 
       <aside className="flex flex-col gap-4" aria-label={t("details")}>
@@ -150,10 +186,8 @@ function Editor({ noteId, attachmentId, photo, onReload }: { noteId: string; att
               disabled={archived}
               onChange={(e) => {
                 const next = e.target.value || null;
-                if (next !== domainId && marks.length > 0 && !window.confirm(t("confirmDomain"))) return;
-                setDomainId(next);
-                setDirty(true);
-                if (next !== domainId) change(marks.map((m) => ({ ...m, label: null })));
+                if (next !== domainId && marks.length > 0) setPendingDomain(next);
+                else changeDomain(next);
               }}
             >
               <option value="">{t("choose")}</option>

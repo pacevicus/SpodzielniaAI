@@ -1,7 +1,7 @@
 # Next.js frontend (6.1). Build: node:22-alpine. Run: distroless Node 22, non-root, no shell.
 # `next build` with output: "standalone" bundles only the files the server needs.
 ARG NODE_IMAGE=node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402
-ARG RUNTIME_IMAGE=gcr.io/distroless/nodejs22-debian13:nonroot@sha256:ec2313763dd43931543bd03830466e0c409ce73a487e8d46f10db72d3b816c1c
+ARG RUNTIME_IMAGE=gcr.io/distroless/nodejs22-debian13:nonroot@sha256:39c66687298417dbf3ff2fb8b6012c20554494e16414ef7afd07b9abbb45b501
 
 FROM ${NODE_IMAGE} AS deps
 WORKDIR /app

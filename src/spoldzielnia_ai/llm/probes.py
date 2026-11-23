@@ -41,6 +41,7 @@ from spoldzielnia_ai.llm.gateway import (
     ResolvedLlmConfig,
     StaticConfig,
 )
+from spoldzielnia_ai.llm.usage import UsageSink  # noqa: TC001 - runtime-checked by the gateway
 
 if TYPE_CHECKING:
     from pydantic import JsonValue
@@ -99,14 +100,18 @@ def deployment_for(
 
 
 def single_gateway(
-    deployment: Deployment, settings: LlmSettings, transport: ChatTransport | None = None
+    deployment: Deployment,
+    settings: LlmSettings,
+    transport: ChatTransport | None = None,
+    *,
+    usage: UsageSink | None = None,
 ) -> LiteLLMGateway:
     """A gateway that knows one deployment, reachable only under ``PLAYGROUND`` (synthetic
     prompts; embedding probes too). The usual checks still apply: no cloud without
     ``allow_cloud``, and private presets only on cleared deployments."""
     routes = {LLMPurpose.PLAYGROUND: deployment.name}
     config = ResolvedLlmConfig(-1, {deployment.name: deployment}, routes)
-    return LiteLLMGateway(settings, transport, source=StaticConfig(config))
+    return LiteLLMGateway(settings, transport, source=StaticConfig(config), usage=usage)
 
 
 async def _timed(name: str, work: Any) -> tuple[dict[str, JsonValue], Any]:
@@ -133,10 +138,13 @@ def _tokens(result: Any) -> int | None:
 
 
 async def _probe_chat(
-    deployment: Deployment, settings: LlmSettings, transport: ChatTransport | None
+    deployment: Deployment,
+    settings: LlmSettings,
+    transport: ChatTransport | None,
+    usage: UsageSink | None,
 ) -> dict[str, JsonValue]:
     checks: list[dict[str, JsonValue]] = []
-    gateway = single_gateway(deployment, settings, transport)
+    gateway = single_gateway(deployment, settings, transport, usage=usage)
     check, result = await _timed(
         "reply", gateway.complete([SYSTEM, REPLY], purpose=LLMPurpose.PLAYGROUND)
     )
@@ -148,7 +156,9 @@ async def _probe_chat(
     checks.append(check)
     modes: dict[str, bool] = {}
     for mode in ("json_schema", "prompt"):
-        variant = single_gateway(replace(deployment, structured_output=mode), settings, transport)  # pyright: ignore[reportArgumentType]
+        variant = single_gateway(
+            replace(deployment, structured_output=mode), settings, transport, usage=usage
+        )  # pyright: ignore[reportArgumentType]
         check, result = await _timed(
             f"json_{mode}",
             variant.complete(
@@ -190,9 +200,12 @@ def probe_image_data_url() -> str:
 
 
 async def _probe_vlm(
-    deployment: Deployment, settings: LlmSettings, transport: ChatTransport | None
+    deployment: Deployment,
+    settings: LlmSettings,
+    transport: ChatTransport | None,
+    usage: UsageSink | None,
 ) -> dict[str, JsonValue]:
-    gateway = single_gateway(deployment, settings, transport)
+    gateway = single_gateway(deployment, settings, transport, usage=usage)
     message: ChatMessage = {
         "role": "user",
         "content": [
@@ -233,9 +246,10 @@ async def _probe_embed(
     deployment: Deployment,
     settings: LlmSettings,
     transport: ChatTransport | None,
+    usage: UsageSink | None,
 ) -> dict[str, JsonValue]:
     # Synthetic sentences only, so any allowed provider may be probed before it is cleared.
-    gateway = single_gateway(deployment, settings, transport)
+    gateway = single_gateway(deployment, settings, transport, usage=usage)
     check, vectors = await _timed(
         "embed", gateway.embed(list(UNRELATED), private_data=False, purpose=LLMPurpose.PLAYGROUND)
     )
@@ -276,10 +290,13 @@ def word_error_rate(reference: str, hypothesis: str) -> float:
 
 
 async def _probe_transcribe(
-    deployment: Deployment, settings: LlmSettings, transport: ChatTransport | None
+    deployment: Deployment,
+    settings: LlmSettings,
+    transport: ChatTransport | None,
+    usage: UsageSink | None,
 ) -> dict[str, JsonValue]:
     # A synthetic clip, so any allowed provider may be probed before it is cleared.
-    gateway = single_gateway(deployment, settings, transport)
+    gateway = single_gateway(deployment, settings, transport, usage=usage)
     check, result = await _timed(
         "transcribe",
         gateway.transcribe(
@@ -309,10 +326,13 @@ def _picture(colour: str, ellipse: bool) -> str:
 
 
 async def _probe_image_embed(
-    deployment: Deployment, settings: LlmSettings, transport: ChatTransport | None
+    deployment: Deployment,
+    settings: LlmSettings,
+    transport: ChatTransport | None,
+    usage: UsageSink | None,
 ) -> dict[str, JsonValue]:
     # Synthetic pictures only, so any allowed provider may be probed before it is cleared.
-    gateway = single_gateway(deployment, settings, transport)
+    gateway = single_gateway(deployment, settings, transport, usage=usage)
     pictures = [_picture("red", True), _picture("darkred", True), _picture("blue", False)]
     check, vectors = await _timed(
         "image_embed",
@@ -338,16 +358,17 @@ async def probe_model(
     settings: LlmSettings,
     *,
     transport: ChatTransport | None = None,
+    usage: UsageSink | None = None,
 ) -> dict[str, JsonValue]:
     if capability == LlmCapability.VLM:
-        return await _probe_vlm(deployment, settings, transport)
+        return await _probe_vlm(deployment, settings, transport, usage)
     if capability == LlmCapability.EMBED:
-        return await _probe_embed(deployment, settings, transport)
+        return await _probe_embed(deployment, settings, transport, usage)
     if capability == LlmCapability.TRANSCRIBE:
-        return await _probe_transcribe(deployment, settings, transport)
+        return await _probe_transcribe(deployment, settings, transport, usage)
     if capability == LlmCapability.IMAGE_EMBED:
-        return await _probe_image_embed(deployment, settings, transport)
-    return await _probe_chat(deployment, settings, transport)
+        return await _probe_image_embed(deployment, settings, transport, usage)
+    return await _probe_chat(deployment, settings, transport, usage)
 
 
 async def list_models(

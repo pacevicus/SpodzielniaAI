@@ -29,6 +29,8 @@ from spoldzielnia_ai.files.storage import S3ObjectStorage
 from spoldzielnia_ai.llm.config_store import LlmConfigStore
 from spoldzielnia_ai.llm.gateway import LiteLLMGateway, LLMPurpose, ModelNotConfigured, StaticConfig
 from spoldzielnia_ai.llm.injection_guard import InjectionGuard
+from spoldzielnia_ai.llm.usage import BufferedUsage, UsageRecorder
+from spoldzielnia_ai.llm.usage_context import usage_owner
 from spoldzielnia_ai.net.safe_fetch import SafeFetcher
 from spoldzielnia_ai.notebook.queue import CeleryProcessingQueue
 from spoldzielnia_ai.notebook.uploads import UploadPipeline
@@ -105,6 +107,9 @@ class WorkerRuntime:
         self._generation_store: GenerationStore | None = None
         self._image_store: ImageGenerationStore | None = None
         self._engine_cache: dict[str, Engine] = {}
+        # Every worker gateway counts into this buffer (15.2); each job flushes it on the loop
+        # that owns the database engine, since the engines run on other threads and loops.
+        self._usage = BufferedUsage()
 
     def _engine_for(self, kind: DerivativeKind, mime_type: str) -> Engine:
         if kind == DerivativeKind.TRANSCRIPT:
@@ -137,7 +142,9 @@ class WorkerRuntime:
     def _config_gateway(self) -> LiteLLMGateway:
         """For engines on their own event loop (worker thread): the configuration ``run``
         refreshed, not the store with its loop-bound clients."""
-        return LiteLLMGateway(self._settings.llm, source=StaticConfig(self._llm_store().cached))
+        return LiteLLMGateway(
+            self._settings.llm, source=StaticConfig(self._llm_store().cached), usage=self._usage
+        )
 
     def _builtin_docling(self, ocr: bool) -> Engine | None:
         """Docling's PDF pipeline (layout, tables; RapidOCR with ``ocr``), if its models are
@@ -181,7 +188,14 @@ class WorkerRuntime:
         return self._llm_config
 
     def _gateway(self) -> LiteLLMGateway:
-        return LiteLLMGateway(self._settings.llm, source=self._llm_store())
+        return LiteLLMGateway(self._settings.llm, source=self._llm_store(), usage=self._usage)
+
+    def _flush_usage(self) -> None:
+        """Write the calls of the job that just ended (15.2), on the runner's loop."""
+        if not self._usage.pending:
+            return
+        factory, _ = self._shared()
+        self._loop().run(self._usage.flush(UsageRecorder(factory)))
 
     def _shared(self) -> tuple[SessionFactory, EnvelopeCipher]:
         if self._factory is None or self._cipher is None:
@@ -567,6 +581,22 @@ class WorkerRuntime:
         return False
 
     def handler(self, name: TaskName) -> Callable[[Any, int], bool]:
+        return self._counted(self._handler(name))
+
+    def _counted(self, run_job: Callable[[Any, int], bool]) -> Callable[[Any, int], bool]:
+        """The job's LLM calls belong to its owner (15.2); whatever they cost is written when the
+        job ends, even if it failed."""
+
+        def call(job: Any, attempt: int) -> bool:
+            try:
+                with usage_owner(getattr(job, "owner_id", None)):
+                    return run_job(job, attempt)
+            finally:
+                self._flush_usage()
+
+        return call
+
+    def _handler(self, name: TaskName) -> Callable[[Any, int], bool]:
         handlers: dict[TaskName, Callable[[Any, int], bool]] = {
             TaskName.PROMOTE_NOTES: self.promote,
             TaskName.PREPARE_ATLAS: self.prepare_atlas,

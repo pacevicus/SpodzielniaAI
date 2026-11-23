@@ -15,6 +15,8 @@
     "llm": "Providers, models and feature assignments.",
     "users": "Accounts, roles, passwords and blocks.",
     "adminAtlas": "Atlas domains and dataset export.",
-    "branding": "The cooperative's name, logo and colours."
+    "branding": "The cooperative's name, logo and colours.",
+    "usage": "How much AI compute you use and its estimated cost.",
+    "adminUsage": "AI model usage by members and the system, with estimated cost."
   }
 }

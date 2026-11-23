@@ -102,6 +102,8 @@ def resolve(
             structured_output=item.structured_output,
             timeout_seconds=item.timeout_seconds,
             provider=item.litellm_provider,
+            price_in_micro=item.price_in_micro,
+            price_out_micro=item.price_out_micro,
         )
     routes = {
         LLMPurpose(purpose.value): names[key]

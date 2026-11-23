@@ -15,6 +15,8 @@
     "llm": "Dostawcy, modele i przypisania funkcji.",
     "users": "Konta, role, hasła i blokady.",
     "adminAtlas": "Dziedziny atlasu i eksport zbioru danych.",
-    "branding": "Nazwa, logo i kolory spółdzielni."
+    "branding": "Nazwa, logo i kolory spółdzielni.",
+    "usage": "Ile mocy obliczeniowej AI zużywasz i jaki jest szacunkowy koszt.",
+    "adminUsage": "Zużycie modeli AI przez członków i system, z szacunkowym kosztem."
   }
 }

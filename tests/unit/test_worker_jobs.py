@@ -116,7 +116,9 @@ def test_derivative_kinds_per_file_type(mime: str, kinds: list[DerivativeKind]) 
     assert derivative_kinds(ALLOWED[mime]) == kinds
 
 
-def test_atlas_preparation_runs_in_worker_core(tmp_path: Path) -> None:
+def test_atlas_preparation_runs_in_worker_core(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     from pydantic import SecretStr
 
     from spoldzielnia_ai.core.settings import (
@@ -140,4 +142,14 @@ def test_atlas_preparation_runs_in_worker_core(tmp_path: Path) -> None:
         ),
     )
     runtime = WorkerRuntime(settings, make_celery("memory://", eager=True))
-    assert runtime.handler(TaskName.PREPARE_ATLAS) == runtime.prepare_atlas
+    routed: list[object] = []
+
+    def prepare(job: object, _attempt: int) -> bool:
+        routed.append(job)
+        return True
+
+    # The handler wraps the job (owner and usage flush), so check the routing by calling it.
+    monkeypatch.setattr(runtime, "prepare_atlas", prepare)
+    job = object()
+    assert runtime.handler(TaskName.PREPARE_ATLAS)(job, 1) is True
+    assert routed == [job]

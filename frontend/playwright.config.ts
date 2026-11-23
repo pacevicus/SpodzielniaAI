@@ -24,6 +24,6 @@ export default defineConfig({
     { name: "chromium", use: { ...devices["Desktop Chrome"] } },
     // US-06: the shell on a tablet and a phone (scenario 14), plus scenarios that must hold there too.
     { name: "tablet", testMatch: /14-app-shell/, use: { ...devices["Desktop Chrome"], viewport: { width: 768, height: 1024 }, hasTouch: true } },
-    { name: "mobile", testMatch: /(1-auth|7-headers|14-app-shell|16-language)\.spec/, use: { ...devices["Pixel 7"] } },
+    { name: "mobile", testMatch: /(1-auth|7-headers|14-app-shell|16-language|17-ai-usage)\.spec/, use: { ...devices["Pixel 7"] } },
   ],
 });

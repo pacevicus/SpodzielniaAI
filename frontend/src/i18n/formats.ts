@@ -13,5 +13,6 @@ export const formats = {
   number: {
     integer: { maximumFractionDigits: 0 },
     percent: { style: "percent", maximumFractionDigits: 0 },
+    money: { minimumFractionDigits: 2, maximumFractionDigits: 4 },
   },
 } satisfies Formats;

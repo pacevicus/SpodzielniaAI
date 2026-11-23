@@ -38,6 +38,10 @@ class SnapshotDeployment(BaseModel):
     structured_output: Literal["json_schema", "prompt"] | None = None
     timeout_seconds: float | None = None
     embed_dimension: int | None = None
+    # Price per million tokens in micro-units (15.3). Frozen with the revision, so the usage
+    # counters price a call with the price its revision had.
+    price_in_micro: int | None = None
+    price_out_micro: int | None = None
 
     @property
     def display_name(self) -> str:

@@ -643,6 +643,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All Usage */
+        get: operations["all_usage_admin_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/users": {
         parameters: {
             query?: never;
@@ -1564,6 +1581,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Usage */
+        get: operations["my_usage_me_usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notes": {
         parameters: {
             query?: never;
@@ -2021,6 +2055,27 @@ export interface components {
             updated_at: string | null;
             /** Version */
             version: number;
+        };
+        /** AdminUsageOut */
+        AdminUsageOut: {
+            /** By Purpose */
+            by_purpose: components["schemas"]["PurposeUsageOut"][];
+            /** Currency */
+            currency: string;
+            /** Members */
+            members: components["schemas"]["MemberUsageOut"][];
+            /**
+             * Period From
+             * Format: date
+             */
+            period_from: string;
+            /**
+             * Period To
+             * Format: date
+             */
+            period_to: string;
+            system: components["schemas"]["UsageTotalsOut"];
+            total: components["schemas"]["UsageTotalsOut"];
         };
         /**
          * AnnotationSource
@@ -2971,6 +3026,17 @@ export interface components {
             /** Roles */
             roles: components["schemas"]["Role"][];
         };
+        /** MemberUsageOut */
+        MemberUsageOut: {
+            /** Display Name */
+            display_name: string | null;
+            totals: components["schemas"]["UsageTotalsOut"];
+            /**
+             * User Id
+             * Format: uuid
+             */
+            user_id: string;
+        };
         /** MergeIn */
         MergeIn: {
             /**
@@ -2990,6 +3056,7 @@ export interface components {
             model_name: string;
             /** Notes */
             notes?: string | null;
+            price?: components["schemas"]["PriceIn"] | null;
             /**
              * Provider Id
              * Format: uuid
@@ -3026,6 +3093,10 @@ export interface components {
             model_name: string;
             /** Notes */
             notes: string | null;
+            /** Price In Per Million */
+            price_in_per_million?: string | null;
+            /** Price Out Per Million */
+            price_out_per_million?: string | null;
             /**
              * Provider Id
              * Format: uuid
@@ -3042,6 +3113,7 @@ export interface components {
             max_tokens?: number | null;
             /** Notes */
             notes?: string | null;
+            price?: components["schemas"]["PriceIn"] | null;
             /** Temperature */
             temperature?: number | null;
         };
@@ -3068,6 +3140,24 @@ export interface components {
             submitted_at: string | null;
             /** Verified At */
             verified_at: string | null;
+        };
+        /** MyUsageOut */
+        MyUsageOut: {
+            /** By Purpose */
+            by_purpose: components["schemas"]["PurposeUsageOut"][];
+            /** Currency */
+            currency: string;
+            /**
+             * Period From
+             * Format: date
+             */
+            period_from: string;
+            /**
+             * Period To
+             * Format: date
+             */
+            period_to: string;
+            totals: components["schemas"]["UsageTotalsOut"];
         };
         /**
          * NoteAnswer
@@ -3390,6 +3480,17 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /**
+         * PriceIn
+         * @description What one million prompt and completion tokens cost, in the usage currency (15.3).
+         *     Both prices or none; at most six decimals (micro-units in the database).
+         */
+        PriceIn: {
+            /** Price In Per Million */
+            price_in_per_million: number | string;
+            /** Price Out Per Million */
+            price_out_per_million: number | string;
+        };
         /** ProbeOut */
         ProbeOut: {
             model: components["schemas"]["ModelOut"];
@@ -3602,6 +3703,12 @@ export interface components {
             /** Private Data */
             private_data: boolean;
             purpose: components["schemas"]["LlmRoutePurpose"];
+        };
+        /** PurposeUsageOut */
+        PurposeUsageOut: {
+            /** Purpose */
+            purpose: string;
+            totals: components["schemas"]["UsageTotalsOut"];
         };
         /** QueueItemOut */
         QueueItemOut: {
@@ -4157,6 +4264,23 @@ export interface components {
              * Format: uuid
              */
             user_id: string;
+        };
+        /** UsageTotalsOut */
+        UsageTotalsOut: {
+            /** Calls */
+            calls: number;
+            /** Completion Tokens */
+            completion_tokens: number;
+            /** Cost */
+            cost: string;
+            /** Cost Micro */
+            cost_micro: number;
+            /** Prompt Tokens */
+            prompt_tokens: number;
+            /** Total Tokens */
+            total_tokens: number;
+            /** Unpriced Calls */
+            unpriced_calls: number;
         };
         /** UserCoverageOut */
         UserCoverageOut: {
@@ -5624,6 +5748,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOut"];
+                };
+            };
+        };
+    };
+    all_usage_admin_usage_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminUsageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -7214,6 +7370,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_usage_me_usage_get: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyUsageOut"];
+                };
             };
             /** @description Validation Error */
             422: {

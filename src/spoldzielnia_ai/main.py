@@ -38,6 +38,8 @@ from spoldzielnia_ai.api.promotion import router as promotions_router
 from spoldzielnia_ai.api.rag import router as rag_router
 from spoldzielnia_ai.api.recognition import router as recognition_router
 from spoldzielnia_ai.api.reviews import router as reviews_router
+from spoldzielnia_ai.api.usage import admin_router as admin_usage_router
+from spoldzielnia_ai.api.usage import member_router as usage_member_router
 from spoldzielnia_ai.api.wiki import router as wiki_router
 from spoldzielnia_ai.atlas.generations import ImageGenerationStore
 from spoldzielnia_ai.auth.crypto import CsrfTokens, TokenSealer, derive_key
@@ -58,6 +60,7 @@ from spoldzielnia_ai.files.antivirus import ClamdScanner
 from spoldzielnia_ai.files.storage import S3ObjectStorage
 from spoldzielnia_ai.llm.config_store import LlmConfigStore
 from spoldzielnia_ai.llm.gateway import LiteLLMGateway
+from spoldzielnia_ai.llm.usage import UsageRecorder
 from spoldzielnia_ai.notebook.queue import CeleryProcessingQueue
 from spoldzielnia_ai.shield.alerts import make_notifier
 from spoldzielnia_ai.vector.client import make_qdrant
@@ -146,7 +149,13 @@ def create_app(
     app.state.llm_config = LlmConfigStore(
         app.state.session_factory, app.state.cipher, settings.llm, redis
     )
-    app.state.llm = LiteLLMGateway(settings.llm, source=app.state.llm_config)
+    # Every successful model response is counted (15.2): the api's own calls (chat, questions,
+    # the admin's playground) and their owner, set per request by ``current_user``.
+    app.state.llm = LiteLLMGateway(
+        settings.llm,
+        source=app.state.llm_config,
+        usage=UsageRecorder(app.state.session_factory),
+    )
     # Which index generation searches use, with which embedding model (10.3, P8).
     app.state.generations = GenerationStore(
         app.state.session_factory, app.state.cipher, settings.llm
@@ -159,6 +168,7 @@ def create_app(
     app.state.notifier = make_notifier(settings.shield)
     app.include_router(auth_router)
     app.include_router(me_router)
+    app.include_router(usage_member_router)  # /me/usage (15.3)
     app.include_router(capabilities_router)
     app.include_router(branding_router)  # public: the look of every page (13.3)
     app.include_router(processors_router)
@@ -176,6 +186,7 @@ def create_app(
     app.include_router(reviews_router)
     app.include_router(admin_router)
     app.include_router(admin_llm_router)
+    app.include_router(admin_usage_router)  # /admin/usage (15.4)
     app.include_router(admin_users_router)
     app.include_router(admin_branding_router)
     app.include_router(atlas_labels_router)

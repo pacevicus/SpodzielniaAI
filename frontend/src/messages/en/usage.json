@@ -1,0 +1,39 @@
+{
+  "period": {
+    "legend": "Period",
+    "from": "From",
+    "to": "To",
+    "show": "Show",
+    "last30": "Last 30 days",
+    "invalid": "The end date is earlier than the start date.",
+    "tooLong": "A period may span at most one year."
+  },
+  "totals": {
+    "calls": "Calls",
+    "tokens": "Tokens in total",
+    "promptTokens": "Prompt tokens",
+    "completionTokens": "Completion tokens",
+    "cost": "Estimated cost",
+    "costNote": "{currency}, estimate"
+  },
+  "member": {
+    "title": "AI usage",
+    "description": "The compute of the AI models used by your questions and document processing. Costs are estimates.",
+    "byPurpose": "By task",
+    "empty": "No AI models were used in this period."
+  },
+  "admin": {
+    "title": "AI usage in the cooperative",
+    "description": "Usage of all members and of system work in the chosen period. Costs are estimates.",
+    "system": "System work (no member)",
+    "all": "Total",
+    "members": "Members",
+    "member": "Member",
+    "byPurpose": "By task",
+    "noMembers": "No member used AI models in this period.",
+    "priceNote": "Prices apply from the activation of the configuration revision they were saved in."
+  },
+  "unpriced": "{count, plural, one {# call without a model price: its cost is not counted} few {# calls without a model price: their cost is not counted} many {# calls without a model price: their cost is not counted} other {# calls without a model price: their cost is not counted}}",
+  "failed": "The usage figures could not be loaded. Try again.",
+  "loading": "Loading…"
+}

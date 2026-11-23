@@ -18,6 +18,7 @@ import plPrivacy from "./pl/privacy.json";
 import plReview from "./pl/review.json";
 import plShell from "./pl/shell.json";
 import plTitles from "./pl/titles.json";
+import plUsage from "./pl/usage.json";
 import plWiki from "./pl/wiki.json";
 import enAdminAtlas from "./en/adminAtlas.json";
 import enAdminBranding from "./en/adminBranding.json";
@@ -35,6 +36,7 @@ import enPrivacy from "./en/privacy.json";
 import enReview from "./en/review.json";
 import enShell from "./en/shell.json";
 import enTitles from "./en/titles.json";
+import enUsage from "./en/usage.json";
 import enWiki from "./en/wiki.json";
 
 const pl = {
@@ -54,6 +56,7 @@ const pl = {
   review: plReview,
   shell: plShell,
   titles: plTitles,
+  usage: plUsage,
   wiki: plWiki,
 };
 
@@ -74,6 +77,7 @@ const en = {
   review: enReview,
   shell: enShell,
   titles: enTitles,
+  usage: enUsage,
   wiki: enWiki,
 };
 
